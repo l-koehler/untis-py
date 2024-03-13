@@ -155,6 +155,13 @@ class MainWindow(QMainWindow):
     def next_week(self):
         self.date_edit.setDate(self.date_edit.date().addDays(7))
 
+    def reload_all(self):
+        self.cached_responses = []
+        # delete all rows and draw empty table to make the reload visible
+        self.timetable.setRowCount(0)
+        self.timetable.repaint()
+        self.fetch_week()
+
     def __init__(self):
         super().__init__()
         uic.loadUi("mainwindow.ui", self)
@@ -167,6 +174,7 @@ class MainWindow(QMainWindow):
         self.timetable.cellClicked.connect(self.info_popup)
         self.prev_btn.pressed.connect(self.prev_week)
         self.next_btn.pressed.connect(self.next_week)
+        self.reload_btn.pressed.connect(self.reload_all)
         self.timetable.setHorizontalHeaderLabels(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
         self.show()
         # if the credentials are already all set, log in automatically

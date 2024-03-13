@@ -26,9 +26,9 @@
    <widget class="QPushButton" name="login_btn">
     <property name="geometry">
      <rect>
-      <x>280</x>
+      <x>230</x>
       <y>10</y>
-      <width>121</width>
+      <width>131</width>
       <height>25</height>
      </rect>
     </property>
@@ -92,7 +92,7 @@
    <widget class="QDateEdit" name="date_edit">
     <property name="geometry">
      <rect>
-      <x>500</x>
+      <x>590</x>
       <y>10</y>
       <width>131</width>
       <height>21</height>
@@ -108,7 +108,7 @@
       <second>0</second>
       <year>2024</year>
       <month>2</month>
-      <day>23</day>
+      <day>21</day>
      </datetime>
     </property>
     <property name="currentSection">
@@ -127,7 +127,7 @@
    <widget class="QComboBox" name="classes_cb">
     <property name="geometry">
      <rect>
-      <x>720</x>
+      <x>770</x>
       <y>10</y>
       <width>121</width>
       <height>22</height>
@@ -146,6 +146,9 @@
     <property name="text">
      <string/>
     </property>
+    <property name="shortcut">
+     <string>Left</string>
+    </property>
     <property name="arrowType">
      <enum>Qt::LeftArrow</enum>
     </property>
@@ -162,8 +165,27 @@
     <property name="text">
      <string>...</string>
     </property>
+    <property name="shortcut">
+     <string>Right</string>
+    </property>
     <property name="arrowType">
      <enum>Qt::RightArrow</enum>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="reload_btn">
+    <property name="geometry">
+     <rect>
+      <x>410</x>
+      <y>10</y>
+      <width>131</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Reload</string>
+    </property>
+    <property name="shortcut">
+     <string>Up, Ctrl+R</string>
     </property>
    </widget>
   </widget>
