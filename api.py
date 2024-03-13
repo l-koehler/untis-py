@@ -42,9 +42,24 @@ def class_by_name(self, name):
     exit(-1)
 
 def get_table(self, starttime, endtime, klasse):
-    timetable = self.session.timetable_extended(
-        start=starttime, end=endtime, klasse=klasse
-    ).to_table()
+    try:
+        timetable = self.session.timetable_extended(
+            start=starttime, end=endtime, klasse=klasse
+        ).to_table()
+    except webuntis.errors.RemoteError:
+        dlg = QMessageBox.critical(
+            self,
+            "Permision Error!",
+            f"The user {self.user} does not have permission to view the Timetable for {klasse.name}!"
+        )
+        return None
+    except Error as err:
+        dlg = QMessageBox.critical(
+            self,
+            "Reading Timetable failed!",
+            f"Unknown Error: \"{err}\"!"
+        )
+        return None
     ret = []
     # somewhat comprehensible parser (might be a lie)
     for vertical_time_range in timetable:
@@ -61,9 +76,15 @@ def get_table(self, starttime, endtime, klasse):
                     # This Lesson is packed in a list with other lessons at the same time.
                     notes = []
                     if period.info != "":
-                        notes += period.info
+                        notes.append(period.info)
                     if period.type == "ex":
-                        notes += "Exam"
+                        notes.append("Exam")
+                    if notes == []:
+                        notes_str = ""
+                    elif len(notes) == 1:
+                        notes_str = notes[0]
+                    else:
+                        notes_str = "; ".join(notes)
 
                     # string indicating room
                     rooms_changed = False
@@ -73,10 +94,7 @@ def get_table(self, starttime, endtime, klasse):
                         room_str = f"{period.original_rooms[0].name} -> {period.rooms[0].name}"
                         rooms_changed = True
                     else:
-                        if period.rooms[0].name == period.rooms[0].long_name:
-                            room_str = period.rooms[0].name
-                        else:
-                            room_str = f"{period.rooms[0].name} ({period.rooms[0].long_name})"
+                        room_str = period.rooms[0].name
 
                     # string indicating color
                     if period.code == "cancelled":
@@ -86,7 +104,7 @@ def get_table(self, starttime, endtime, klasse):
                     else:
                         color = "white"
 
-                    period_specific_item = [subject.name, room_str, notes, color]
+                    period_specific_item = [subject.name, room_str, notes_str, color, period]
                     day_ret.append(period_specific_item)
                 blob_ret.append(day_ret)
             ret.append(blob_ret)

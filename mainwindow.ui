@@ -6,18 +6,27 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>541</width>
-    <height>305</height>
+    <width>1123</width>
+    <height>661</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Untis Desktop</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="autoFillBackground">
+    <bool>true</bool>
+   </property>
    <widget class="QPushButton" name="login_btn">
     <property name="geometry">
      <rect>
-      <x>50</x>
+      <x>280</x>
       <y>10</y>
       <width>121</width>
       <height>25</height>
@@ -32,15 +41,58 @@
      <rect>
       <x>10</x>
       <y>40</y>
-      <width>521</width>
-      <height>241</height>
+      <width>1111</width>
+      <height>591</height>
      </rect>
     </property>
+    <property name="autoFillBackground">
+     <bool>true</bool>
+    </property>
+    <property name="sizeAdjustPolicy">
+     <enum>QAbstractScrollArea::AdjustToContents</enum>
+    </property>
+    <property name="rowCount">
+     <number>8</number>
+    </property>
+    <property name="columnCount">
+     <number>5</number>
+    </property>
+    <attribute name="horizontalHeaderCascadingSectionResizes">
+     <bool>false</bool>
+    </attribute>
+    <attribute name="horizontalHeaderMinimumSectionSize">
+     <number>210</number>
+    </attribute>
+    <attribute name="horizontalHeaderDefaultSectionSize">
+     <number>220</number>
+    </attribute>
+    <attribute name="verticalHeaderVisible">
+     <bool>false</bool>
+    </attribute>
+    <attribute name="verticalHeaderMinimumSectionSize">
+     <number>70</number>
+    </attribute>
+    <attribute name="verticalHeaderDefaultSectionSize">
+     <number>70</number>
+    </attribute>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <row/>
+    <column/>
+    <column/>
+    <column/>
+    <column/>
+    <column/>
    </widget>
    <widget class="QDateEdit" name="date_edit">
     <property name="geometry">
      <rect>
-      <x>200</x>
+      <x>500</x>
       <y>10</y>
       <width>131</width>
       <height>21</height>
@@ -56,7 +108,7 @@
       <second>0</second>
       <year>2024</year>
       <month>2</month>
-      <day>26</day>
+      <day>23</day>
      </datetime>
     </property>
     <property name="currentSection">
@@ -75,7 +127,7 @@
    <widget class="QComboBox" name="classes_cb">
     <property name="geometry">
      <rect>
-      <x>360</x>
+      <x>720</x>
       <y>10</y>
       <width>121</width>
       <height>22</height>
@@ -85,9 +137,9 @@
    <widget class="QToolButton" name="prev_btn">
     <property name="geometry">
      <rect>
-      <x>10</x>
+      <x>60</x>
       <y>10</y>
-      <width>24</width>
+      <width>121</width>
       <height>23</height>
      </rect>
     </property>
@@ -101,9 +153,9 @@
    <widget class="QToolButton" name="next_btn">
     <property name="geometry">
      <rect>
-      <x>500</x>
+      <x>940</x>
       <y>10</y>
-      <width>24</width>
+      <width>121</width>
       <height>23</height>
      </rect>
     </property>
