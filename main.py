@@ -122,10 +122,7 @@ class MainWindow(QMainWindow):
             self.cached_responses.append([monday, self.data])
 
         self.timetable.setRowCount(len(self.data))
-        if len(self.data) != 0:
-            self.timetable.setColumnCount(len(self.data[0]))
-        else:
-            self.timetable.setColumnCount(0)
+
         for row in range(len(self.data)):
             for col in range(len(self.data[row])):
                 entry_data = self.data[row][col]
