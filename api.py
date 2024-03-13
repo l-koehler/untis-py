@@ -107,7 +107,7 @@ def get_table(self, starttime, endtime, klasse):
                     if period.code == "cancelled":
                         color = "red"
                     elif period.code == "irregular" or rooms_changed:
-                        color = "yellow"
+                        color = "orange"
                     else:
                         color = "white"
 

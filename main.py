@@ -135,9 +135,11 @@ class MainWindow(QMainWindow):
                     lesson_widget.setTextFormat(Qt.TextFormat.RichText)
                     richtext = f"<b>{lesson[0]}</b><br>{lesson[1]}"
                     if lesson[2] != '':
-                        richtext += f"<br>{lesson[2]}"
+                        richtext += f"<br><small>{lesson[2]}</small>"
                     if lesson[3] != 'white':
-                        lesson_widget.setStyleSheet(f"background-color:{lesson[3]}")
+                        stylesheet = f"border-radius:4px; background-color:{lesson[3]}"
+                        lesson_widget.setStyleSheet(stylesheet)
+                    lesson_widget.setContentsMargins(2,0,0,0)
                     lesson_widget.setText(richtext)
                     layout.addWidget(lesson_widget)
                     if len(entry_data) != 1 and i+1 != len(entry_data):
