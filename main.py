@@ -101,6 +101,8 @@ class MainWindow(QMainWindow):
     def update_cached_class(self):
         if self.classes_cb.currentIndex() != 0:
             self.settings.setValue('class_choice', self.classes_cb.currentIndex())
+            # delete cache, it is only valid for one class
+            self.cached_responses = []
             self.fetch_week()
 
     def load_cached_class(self):
@@ -114,6 +116,11 @@ class MainWindow(QMainWindow):
         self.data = api.get_table(self, monday, friday, api.class_by_name(self, self.classes_cb.currentText()))
         if self.data == None:
             return # error was already displayed earlier
+
+        # add entry to cache, if not yet cached
+        if not monday in [i[0] for i in self.cached_responses]:
+            self.cached_responses.append([monday, self.data])
+
         self.timetable.setRowCount(len(self.data))
         if len(self.data) != 0:
             self.timetable.setColumnCount(len(self.data[0]))
@@ -140,17 +147,16 @@ class MainWindow(QMainWindow):
                         # add separator
                         line = QFrame()
                         line.setFrameShape(QFrame.Shape.VLine)
+                        line.setStyleSheet("background-color:lightgray;color:lightgray")
                         layout.addWidget(line)
                 widget.setLayout(layout)
                 self.timetable.setCellWidget(row, col, widget)
 
     def prev_week(self):
         self.date_edit.setDate(self.date_edit.date().addDays(-7))
-        self.fetch_week()
 
     def next_week(self):
         self.date_edit.setDate(self.date_edit.date().addDays(7))
-        self.fetch_week()
 
     def __init__(self):
         super().__init__()
@@ -168,13 +174,13 @@ class MainWindow(QMainWindow):
         self.show()
         # if the credentials are already all set, log in automatically
         self.data = None
+        self.cached_responses = [] # lists of (monday, data)
         credentials = [self.server, self.school, self.user, self.password]
         if None not in credentials and '' not in credentials:
             self.session = api.login(self, credentials)
             if self.session != None: # if login successful
                 self.classes_cb.addItems([i.name for i in self.session.klassen()])
-                self.load_cached_class()
-                self.fetch_week()
+                self.load_cached_class() # triggers update_cached_class triggers fetch_week
         else:
             self.session = None
 

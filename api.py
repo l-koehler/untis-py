@@ -42,10 +42,17 @@ def class_by_name(self, name):
     exit(-1)
 
 def get_table(self, starttime, endtime, klasse):
+    # try loading from cache
+    timetable = None
+    for cache_entry in self.cached_responses:
+        if cache_entry[0] == starttime:
+            return cache_entry[1]
+    # didnt load, ask the server
     try:
-        timetable = self.session.timetable_extended(
-            start=starttime, end=endtime, klasse=klasse
-        ).to_table()
+        if timetable == None:
+            timetable = self.session.timetable_extended(
+                start=starttime, end=endtime, klasse=klasse
+            ).to_table()
     except webuntis.errors.RemoteError:
         dlg = QMessageBox.critical(
             self,
