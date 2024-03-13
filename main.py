@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QSize, Qt, QDate, QSettings
 from PyQt6 import uic
-from PyQt6.QtGui import QTextFormat
+from PyQt6.QtGui import QTextFormat, QShortcut, QKeySequence
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame
 import sys, api
 import datetime as dt
@@ -155,6 +155,9 @@ class MainWindow(QMainWindow):
     def next_week(self):
         self.date_edit.setDate(self.date_edit.date().addDays(7))
 
+    def current_week(self):
+        self.date_edit.setDate(QDate.currentDate())
+
     def reload_all(self):
         self.cached_responses = []
         # delete all rows and draw empty table to make the reload visible
@@ -168,6 +171,7 @@ class MainWindow(QMainWindow):
         self.settings = QSettings('l-koehler', 'untis-py')
         self.load_settings()
         self.date_edit.setDate(QDate.currentDate())
+        self.shortcut_current_week = QShortcut(QKeySequence('Down'), self)
         self.date_edit.dateChanged.connect(self.date_changed)
         self.login_btn.pressed.connect(self.login_popup)
         self.classes_cb.currentIndexChanged.connect(self.update_cached_class)
@@ -175,6 +179,7 @@ class MainWindow(QMainWindow):
         self.prev_btn.pressed.connect(self.prev_week)
         self.next_btn.pressed.connect(self.next_week)
         self.reload_btn.pressed.connect(self.reload_all)
+        self.shortcut_current_week.activated.connect(self.current_week)
         self.timetable.setHorizontalHeaderLabels(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
         self.show()
         # if the credentials are already all set, log in automatically
