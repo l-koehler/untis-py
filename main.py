@@ -1,8 +1,8 @@
 from PyQt6.QtCore import QSize, Qt, QDate, QSettings
 from PyQt6 import uic
 from PyQt6.QtGui import QTextFormat, QShortcut, QKeySequence
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame
-import sys, api
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView
+import sys, os, api
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
 
@@ -14,7 +14,11 @@ class LoginPopup(QDialog):
         self.settings.setValue('password', self.password_le.text())
     def __init__(self, settings):
         QWidget.__init__(self)
-        uic.loadUi('login.ui', self)
+        if getattr(sys, 'frozen', False):
+            path = os.path.join(sys._MEIPASS, "login.ui")
+        else:
+            path = "./login.ui"
+        uic.loadUi(path, self)
         self.settings = settings
         self.server_le.setText(self.settings.value('server') or '')
         self.school_le.setText(self.settings.value('school') or '')
@@ -25,10 +29,15 @@ class LoginPopup(QDialog):
 class InfoPopup(QDialog):
     def __init__(self, parent):
         QWidget.__init__(self)
-        uic.loadUi('lesson_info.ui', self)
+        if getattr(sys, 'frozen', False):
+            path = os.path.join(sys._MEIPASS, "lesson_info.ui")
+        else:
+            path = "./lesson_info.ui"
+        uic.loadUi(path, self)
         self.lesson_tab.clear()
         col = parent.timetable.currentColumn()
         row = parent.timetable.currentRow()
+        parent.timetable.selectionModel().clear()
         # richtext info about the lesson
         hour_data = parent.data[row][col]
         for i in range(len(hour_data)):
@@ -169,11 +178,16 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        uic.loadUi("mainwindow.ui", self)
+        if getattr(sys, 'frozen', False):
+            path = os.path.join(sys._MEIPASS, "mainwindow.ui")
+        else:
+            path = "./mainwindow.ui"
+        uic.loadUi(path, self)
         self.settings = QSettings('l-koehler', 'untis-py')
         self.load_settings()
         self.date_edit.setDate(QDate.currentDate())
         self.shortcut_current_week = QShortcut(QKeySequence('Down'), self)
+        self.timetable.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.date_edit.dateChanged.connect(self.date_changed)
         self.login_btn.pressed.connect(self.login_popup)
         self.classes_cb.currentIndexChanged.connect(self.update_cached_class)

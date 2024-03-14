@@ -15,3 +15,12 @@ You need the following Dependencies:
 
 Install these and run main.py.  
 TODO (later): Package this and publish to pip  
+
+#### Compile on Windows
+```
+set PYTHONOPTIMIZE=2
+pyinstaller --noupx --onefile --add-data="mainwindow.ui;." --add-data="login.ui;." --add-data="lesson_info.ui;." --windowed --icon="./icon.ico" main.py
+```
+
+#### Other stuff
+Icon taken from [iconduck.com](https://iconduck.com/icons/245483/untis-mobile), where it is under the [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) License.  
