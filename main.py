@@ -34,7 +34,6 @@ class InfoPopup(QDialog):
         else:
             path = "./lesson_info.ui"
         uic.loadUi(path, self)
-        self.lesson_tab.clear()
         col = parent.timetable.currentColumn()
         row = parent.timetable.currentRow()
         parent.timetable.selectionModel().clear()
@@ -70,9 +69,10 @@ class InfoPopup(QDialog):
             else:
                 klassen_str = '; '.join([i.name for i in full_repl.klassen])
 
-            rt_info = f"<h3>{lesson[0]}</h3>\
-            <br>Start: {full_repl.start.time()}\
-            <br>End: {full_repl.end.time()}\
+            long_name = full_repl.subjects[0].long_name
+            rt_info = f"<h4>{long_name}</h4>\
+            <br>Start: {full_repl.start.time().strftime('%H:%M')}\
+            <br>End: {full_repl.end.time().strftime('%H:%M')}\
             <br>Type: {status_str}\
             <br>Room: {room_str}\
             <br>Classes: {klassen_str}"

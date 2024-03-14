@@ -18,15 +18,15 @@ def login(self, credentials):
         dlg = QMessageBox.critical(
             self,
             "Login failed!",
-            "Likely bad server/school/credentials!"
+            f"Error: \"{e}\". Check credentials!"
         )
         return None
-    except:
+    except Exception as e:
         # Likely network error
         dlg = QMessageBox.critical(
             self,
             "Login failed!",
-            "Unknown Error: Try checking the Network connection or the Server!"
+            f"Unknown Error: {e}"
         )
         return None
 

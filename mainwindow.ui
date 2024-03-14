@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1123</width>
-    <height>661</height>
+    <height>655</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -108,7 +108,7 @@
       <second>0</second>
       <year>2024</year>
       <month>2</month>
-      <day>21</day>
+      <day>20</day>
      </datetime>
     </property>
     <property name="currentSection">
