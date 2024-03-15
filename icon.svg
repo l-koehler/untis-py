@@ -1,0 +1,21 @@
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <linearGradient id="frame_grad" x1="0" x2="0" y1="0" y2="1" gradientTransform="rotate(45, 0.5, 0)">
+            <stop offset=" 0%" stop-color="#ED0" />
+            <stop offset="40%" stop-color="#E90" />
+        </linearGradient>
+    </defs>
+    <!-- clock -->
+    <circle cx="100" cy="100" r="80" stroke="url(#frame_grad)" stroke-width="12" fill="#EEE"/>
+    <!-- clock hands/markings -->
+    <line x1="100" y1="100" x2="100" y2="34"                                   stroke="#3A3ADD" stroke-width="8" stroke-linecap="round" />
+    <line x1="100" y1="100" x2="100" y2="34" transform="rotate( 45, 100, 100)" stroke="#DD3A3A" stroke-width="8" stroke-linecap="round" />
+    <line x1="100" y1="100" x2="100" y2="34" transform="rotate( 90, 100, 100)" stroke="#DDDD3A" stroke-width="8" stroke-linecap="round" />
+    <line x1="100" y1=" 45" x2="100" y2="33" transform="rotate(135, 100, 100)" stroke="#888"    stroke-width="6" stroke-linecap="round" />
+    <line x1="100" y1=" 45" x2="100" y2="33" transform="rotate(180, 100, 100)" stroke="#888"    stroke-width="6" stroke-linecap="round" />
+    <line x1="100" y1=" 45" x2="100" y2="33" transform="rotate(225, 100, 100)" stroke="#888"    stroke-width="6" stroke-linecap="round" />
+    <line x1="100" y1=" 45" x2="100" y2="33" transform="rotate(270, 100, 100)" stroke="#888"    stroke-width="6" stroke-linecap="round" />
+    <line x1="100" y1=" 45" x2="100" y2="33" transform="rotate(315, 100, 100)" stroke="#888"    stroke-width="6" stroke-linecap="round" />
+    <!-- without this, the clock hand colors weirdly overlap when zoomed in -->
+    <circle cx="100" cy="100" r="4.025" fill="#DDDD3A" />
+</svg>

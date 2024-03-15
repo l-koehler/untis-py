@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QSize, Qt, QDate, QSettings
 from PyQt6 import uic
-from PyQt6.QtGui import QTextFormat, QShortcut, QKeySequence
+from PyQt6.QtGui import QTextFormat, QShortcut, QKeySequence, QIcon
 from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView
 import sys, os, api
 import datetime as dt
@@ -181,10 +181,20 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         if getattr(sys, 'frozen', False):
-            path = os.path.join(sys._MEIPASS, "mainwindow.ui")
+            ui_path = os.path.join(sys._MEIPASS, "mainwindow.ui")
+            ico_path = os.path.join(sys._MEIPASS, "icon.ico")
         else:
-            path = "./mainwindow.ui"
-        uic.loadUi(path, self)
+            ui_path = "./mainwindow.ui"
+            ico_path = "./icon.ico"
+        uic.loadUi(ui_path, self)
+        # workaround to set icon on windows
+        # how did this mess of an OS ever succeed
+        if sys.platform == "win32":
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('l-koehler.untis-py')
+        # set application icon
+        self.setWindowIcon(QIcon(ico_path))
+
         self.settings = QSettings('l-koehler', 'untis-py')
         self.load_settings()
         self.date_edit.setDate(QDate.currentDate())

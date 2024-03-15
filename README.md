@@ -1,3 +1,6 @@
+## Not made or endorsed by the Untis GMBH!
+## For the official App, visit untis.at!
+
 #### Features
 Basic Desktop application for WebUntis, written in Python.  
 Loads a lot faster than the website, especially when considering starting a browser.  
@@ -17,10 +20,14 @@ Install these and run main.py.
 TODO (later): Package this and publish to pip  
 
 #### Compile on Windows
+Maybe "compile" the .svg if you changed it:  
+```
+magick -background transparent -define 'icon:auto-resize=16,24,32,64' ./icon.svg ./icon.ico
+```
+Create a .exe (`./dist/main.exe`)  
 ```
 set PYTHONOPTIMIZE=2
-pyinstaller --noupx --onefile --add-data="mainwindow.ui;." --add-data="login.ui;." --add-data="lesson_info.ui;." --windowed --icon="./icon.ico" main.py
+pyinstaller --onefile --add-data="mainwindow.ui;." --add-data="login.ui;." --add-data="lesson_info.ui;." --add-data="icon.ico;." --windowed --icon="./icon.ico" main.py
 ```
-
-#### Other stuff
-Icon taken from [iconduck.com](https://iconduck.com/icons/245483/untis-mobile), where it is under the [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) License.  
+The releases on github are compressed using [UPX](https://upx.github.io/),  
+the uncompressed size is about 32 MB.  
