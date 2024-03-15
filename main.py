@@ -122,7 +122,9 @@ class MainWindow(QMainWindow):
         week_number = selected_day.isocalendar()[1]
         monday = dt.date.fromisocalendar(selected_day.year, week_number, 1)
         friday = dt.date.fromisocalendar(selected_day.year, week_number, 5)
-        self.data = api.get_table(self, monday, friday, api.class_by_name(self, self.classes_cb.currentText()))
+
+        klasse = self.session.klassen()[self.classes_cb.currentIndex()]
+        self.data = api.get_table(self, monday, friday, klasse)
         if self.data == None:
             return # error was already displayed earlier
 

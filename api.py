@@ -30,17 +30,6 @@ def login(self, credentials):
         )
         return None
 
-def class_by_name(self, name):
-    for klasse in self.session.klassen():
-        if klasse.name == name:
-            return klasse
-    dlg = QMessageBox.critical(
-        self,
-        "Class could not be selected!",
-        "Open issue at https://github.com/l-koehler/untis-desktop"
-    )
-    exit(-1)
-
 def get_table(self, starttime, endtime, klasse):
     # try loading from cache
     timetable = None
