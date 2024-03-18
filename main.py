@@ -1,10 +1,16 @@
-from PyQt6.QtCore import QSize, Qt, QDate, QSettings
-from PyQt6 import uic
-from PyQt6.QtGui import QTextFormat, QShortcut, QKeySequence, QIcon
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox
 import sys, os, api
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
+if "--qt5" in sys.argv:
+    from PyQt5.QtCore import QSize, Qt, QDate, QSettings
+    from PyQt5 import uic
+    from PyQt5.QtGui import QTextFormat, QKeySequence, QIcon
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox
+else:
+    from PyQt6.QtCore import QSize, Qt, QDate, QSettings
+    from PyQt6 import uic
+    from PyQt6.QtGui import QTextFormat, QShortcut, QKeySequence, QIcon
+    from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox
 
 class LoginPopup(QDialog):
     def save(self):
@@ -211,7 +217,9 @@ class MainWindow(QMainWindow):
             self.delete_settings()
         self.load_settings()
         self.date_edit.setDate(QDate.currentDate())
-        self.shortcut_current_week = QShortcut(QKeySequence('Down'), self)
+        if not "--qt5" in sys.argv:
+            self.shortcut_current_week = QShortcut(QKeySequence('Down'), self)
+            self.shortcut_current_week.activated.connect(self.current_week)
         self.timetable.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.date_edit.dateChanged.connect(self.date_changed)
         self.login_btn.pressed.connect(self.login_popup)
@@ -220,7 +228,6 @@ class MainWindow(QMainWindow):
         self.prev_btn.pressed.connect(self.prev_week)
         self.next_btn.pressed.connect(self.next_week)
         self.reload_btn.pressed.connect(self.reload_all)
-        self.shortcut_current_week.activated.connect(self.current_week)
         self.timetable.setHorizontalHeaderLabels(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
         self.show()
         # if the credentials are already all set, log in automatically

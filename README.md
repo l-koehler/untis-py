@@ -12,7 +12,7 @@ The UI is atrocious: seriously it takes up 3/4 of my screen, sorry ig
 
 #### Installation
 You need the following Dependencies:  
-* PyQt6  
+* PyQt6 (you can also use PyQt5 by passing `--qt5` to the program)  
 * webuntis  
 * python-datetime  
 
