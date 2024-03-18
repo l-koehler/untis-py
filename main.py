@@ -1,7 +1,7 @@
 from PyQt6.QtCore import QSize, Qt, QDate, QSettings
 from PyQt6 import uic
 from PyQt6.QtGui import QTextFormat, QShortcut, QKeySequence, QIcon
-from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView
+from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox
 import sys, os, api
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
@@ -99,9 +99,20 @@ class MainWindow(QMainWindow):
         self.user     = self.settings.value('user')
         self.password = self.settings.value('password')
 
+    def delete_settings(self):
+        self.settings.clear()
+
     def login_popup(self):
         popup = LoginPopup(self.settings)
         popup.exec()
+        self.load_settings()
+        # try to start a new session
+        credentials = [self.server, self.school, self.user, self.password]
+        if None not in credentials and '' not in credentials:
+            self.session = api.login(self, credentials)
+            if self.session != None: # if login successful
+                self.classes_cb.addItems([i.name for i in self.session.klassen()])
+                self.load_cached_class()
 
     def info_popup(self):
         popup = InfoPopup(self)
@@ -196,6 +207,8 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(ico_path))
 
         self.settings = QSettings('l-koehler', 'untis-py')
+        if "--delete-settings" in sys.argv:
+            self.delete_settings()
         self.load_settings()
         self.date_edit.setDate(QDate.currentDate())
         self.shortcut_current_week = QShortcut(QKeySequence('Down'), self)
