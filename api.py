@@ -17,7 +17,7 @@ def login(self, credentials):
     except Exception as e:
         return ["Login Failed!", f"Error: \"{e}\""]
 
-def get_table(self, starttime, endtime, klasse):
+def get_table(self, starttime, endtime):
     # try loading from cache
     timetable = None
     for cache_entry in self.cached_responses:
@@ -26,11 +26,9 @@ def get_table(self, starttime, endtime, klasse):
     # didnt load, ask the server
     try:
         if timetable == None:
-            timetable = self.session.timetable_extended(
-                start=starttime, end=endtime, klasse=klasse
+            timetable = self.session.my_timetable(
+                start=starttime, end=endtime
             ).to_table()
-    except webuntis.errors.RemoteError:
-        return ["err", "Permission Error!", f"The user {self.user} does not have permission to view the Timetable for {klasse.name}!"]
     except Error as err:
         return ["err", "Reading Timetable failed", f"Unknown Error: \"{err}\"!"]
     ret = []
@@ -85,4 +83,5 @@ def get_table(self, starttime, endtime, klasse):
     Structure of ret:
     list of "hours", each containing one list per day, each containing the structure in L89
     """
+    print(ret[0])
     return ret

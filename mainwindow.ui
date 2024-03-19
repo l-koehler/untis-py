@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1120</width>
-    <height>658</height>
+    <width>1102</width>
+    <height>645</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -31,7 +31,39 @@
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
+     <spacer name="top_space">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeType">
+       <enum>QSizePolicy::Fixed</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>5</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item>
      <layout class="QHBoxLayout" name="top_bar_qhb">
+      <item>
+       <spacer name="horizontalSpacer_5">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>10</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
       <item>
        <widget class="QToolButton" name="prev_btn">
         <property name="text">
@@ -122,7 +154,7 @@
           <second>0</second>
           <year>2024</year>
           <month>2</month>
-          <day>19</day>
+          <day>16</day>
          </datetime>
         </property>
         <property name="currentSection">
@@ -156,32 +188,6 @@
        </spacer>
       </item>
       <item>
-       <widget class="QComboBox" name="classes_cb">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <spacer name="horizontalSpacer_5">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-        <property name="sizeType">
-         <enum>QSizePolicy::Maximum</enum>
-        </property>
-        <property name="sizeHint" stdset="0">
-         <size>
-          <width>100</width>
-          <height>20</height>
-         </size>
-        </property>
-       </spacer>
-      </item>
-      <item>
        <widget class="QToolButton" name="next_btn">
         <property name="text">
          <string>...</string>
@@ -193,6 +199,22 @@
          <enum>Qt::RightArrow</enum>
         </property>
        </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_6">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>10</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
       </item>
      </layout>
     </item>

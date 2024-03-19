@@ -123,8 +123,7 @@ class MainWindow(QMainWindow):
         if None not in credentials and '' not in credentials:
             self.session = api.login(self, credentials)
             if type(self.session) != list: # if login successful
-                self.classes_cb.addItems([i.name for i in self.session.klassen()])
-                self.load_cached_class()
+                self.fetch_week()
             else:
                 QMessageBox.critical(
                     self,
@@ -137,24 +136,13 @@ class MainWindow(QMainWindow):
         popup = InfoPopup(self)
         popup.exec()
 
-    def update_cached_class(self):
-        if self.classes_cb.currentIndex() != 0:
-            self.settings.setValue('class_choice', self.classes_cb.currentIndex())
-            # delete cache, it is only valid for one class
-            self.cached_responses = []
-            self.fetch_week()
-
-    def load_cached_class(self):
-        self.classes_cb.setCurrentIndex(self.settings.value('class_choice', type=int))
-
     def fetch_week(self):
         selected_day = self.date_edit.date().toPyDate()
         week_number = selected_day.isocalendar()[1]
         monday = dt.date.fromisocalendar(selected_day.year, week_number, 1)
         friday = dt.date.fromisocalendar(selected_day.year, week_number, 5)
 
-        klasse = self.session.klassen()[self.classes_cb.currentIndex()]
-        self.data = api.get_table(self, monday, friday, klasse)
+        self.data = api.get_table(self, monday, friday)
         if self.data[0] == "err":
             QMessageBox.critical(
                 self,
@@ -241,7 +229,6 @@ class MainWindow(QMainWindow):
         self.timetable.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.date_edit.dateChanged.connect(self.date_changed)
         self.login_btn.pressed.connect(self.login_popup)
-        self.classes_cb.currentIndexChanged.connect(self.update_cached_class)
         self.timetable.cellClicked.connect(self.info_popup)
         self.prev_btn.pressed.connect(self.prev_week)
         self.next_btn.pressed.connect(self.next_week)
@@ -255,8 +242,7 @@ class MainWindow(QMainWindow):
         if None not in credentials and '' not in credentials:
             self.session = api.login(self, credentials)
             if type(self.session) != list: # if login successful
-                self.classes_cb.addItems([i.name for i in self.session.klassen()])
-                self.load_cached_class() # triggers update_cached_class triggers fetch_week
+                self.fetch_week()
             else:
                 QMessageBox.critical(
                     self,
