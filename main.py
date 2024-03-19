@@ -1,16 +1,22 @@
 import sys, os, api
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
-if "--qt5" in sys.argv:
+
+use_qt5 = True
+if not "--qt5" in sys.argv:
+    use_qt5 = False
+    try:
+        from PyQt6.QtCore import QSize, Qt, QDate, QSettings
+        from PyQt6 import uic
+        from PyQt6.QtGui import QTextFormat, QShortcut, QKeySequence, QIcon
+        from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QBoxLayout
+    except ImportError:
+        use_qt5 = True
+if use_qt5:
     from PyQt5.QtCore import QSize, Qt, QDate, QSettings
     from PyQt5 import uic
     from PyQt5.QtGui import QTextFormat, QKeySequence, QIcon
-    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox
-else:
-    from PyQt6.QtCore import QSize, Qt, QDate, QSettings
-    from PyQt6 import uic
-    from PyQt6.QtGui import QTextFormat, QShortcut, QKeySequence, QIcon
-    from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QBoxLayout
 
 class LoginPopup(QDialog):
     def save(self):
@@ -116,9 +122,16 @@ class MainWindow(QMainWindow):
         credentials = [self.server, self.school, self.user, self.password]
         if None not in credentials and '' not in credentials:
             self.session = api.login(self, credentials)
-            if self.session != None: # if login successful
+            if type(self.session) != list: # if login successful
                 self.classes_cb.addItems([i.name for i in self.session.klassen()])
                 self.load_cached_class()
+            else:
+                QMessageBox.critical(
+                    self,
+                    self.session[0],
+                    self.session[1]
+                )
+                self.session = None
 
     def info_popup(self):
         popup = InfoPopup(self)
@@ -142,8 +155,13 @@ class MainWindow(QMainWindow):
 
         klasse = self.session.klassen()[self.classes_cb.currentIndex()]
         self.data = api.get_table(self, monday, friday, klasse)
-        if self.data == None:
-            return # error was already displayed earlier
+        if self.data[0] == "err":
+            QMessageBox.critical(
+                self,
+                self.data[1],
+                self.data[2]
+            )
+            return
 
         # add entry to cache, if not yet cached
         if not monday in [i[0] for i in self.cached_responses]:
@@ -217,7 +235,7 @@ class MainWindow(QMainWindow):
             self.delete_settings()
         self.load_settings()
         self.date_edit.setDate(QDate.currentDate())
-        if not "--qt5" in sys.argv:
+        if not use_qt5:
             self.shortcut_current_week = QShortcut(QKeySequence('Down'), self)
             self.shortcut_current_week.activated.connect(self.current_week)
         self.timetable.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
@@ -236,9 +254,16 @@ class MainWindow(QMainWindow):
         credentials = [self.server, self.school, self.user, self.password]
         if None not in credentials and '' not in credentials:
             self.session = api.login(self, credentials)
-            if self.session != None: # if login successful
+            if type(self.session) != list: # if login successful
                 self.classes_cb.addItems([i.name for i in self.session.klassen()])
                 self.load_cached_class() # triggers update_cached_class triggers fetch_week
+            else:
+                QMessageBox.critical(
+                    self,
+                    self.session[0],
+                    self.session[1]
+                )
+                self.session = None
         else:
             self.session = None
 

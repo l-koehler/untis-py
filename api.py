@@ -1,6 +1,5 @@
 import webuntis
 import datetime as dt
-from PyQt6.QtWidgets import QMessageBox
 
 def login(self, credentials):
     new_session = webuntis.Session(
@@ -14,21 +13,9 @@ def login(self, credentials):
         s = new_session.login()
         return s
     except webuntis.errors.RemoteError as e:
-        # Invalid credentials
-        dlg = QMessageBox.critical(
-            self,
-            "Login failed!",
-            f"Error: \"{e}\". Check credentials!"
-        )
-        return None
+        return ["Login Failed!", f"Error: \"{e}\". Check credentials!"]
     except Exception as e:
-        # Likely network error
-        dlg = QMessageBox.critical(
-            self,
-            "Login failed!",
-            f"Unknown Error: {e}"
-        )
-        return None
+        return ["Login Failed!", f"Error: \"{e}\""]
 
 def get_table(self, starttime, endtime, klasse):
     # try loading from cache
@@ -43,19 +30,9 @@ def get_table(self, starttime, endtime, klasse):
                 start=starttime, end=endtime, klasse=klasse
             ).to_table()
     except webuntis.errors.RemoteError:
-        dlg = QMessageBox.critical(
-            self,
-            "Permision Error!",
-            f"The user {self.user} does not have permission to view the Timetable for {klasse.name}!"
-        )
-        return None
+        return ["err", "Permission Error!", f"The user {self.user} does not have permission to view the Timetable for {klasse.name}!"]
     except Error as err:
-        dlg = QMessageBox.critical(
-            self,
-            "Reading Timetable failed!",
-            f"Unknown Error: \"{err}\"!"
-        )
-        return None
+        return ["err", "Reading Timetable failed", f"Unknown Error: \"{err}\"!"]
     ret = []
     # somewhat comprehensible parser (might be a lie)
     for vertical_time_range in timetable:
