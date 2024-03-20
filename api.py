@@ -1,13 +1,13 @@
 import webuntis
 import datetime as dt
 
-def login(self, credentials):
+def login(credentials):
     new_session = webuntis.Session(
-        username=credentials[2],
-        password=credentials[3],
         server=credentials[0],
         school=credentials[1],
-        useragent="WebUntis Desktop",
+        username=credentials[2],
+        password=credentials[3],
+        useragent="WebUntis Desktop"
     )
     try:
         s = new_session.login()
@@ -17,19 +17,19 @@ def login(self, credentials):
     except Exception as e:
         return ["Login Failed!", f"Error: \"{e}\""]
 
-def get_table(self, starttime, endtime):
+def get_table(cache, session, starttime, endtime):
     # try loading from cache
     timetable = None
-    for cache_entry in self.cached_responses:
+    for cache_entry in cache:
         if cache_entry[0] == starttime:
             return cache_entry[1]
     # didnt load, ask the server
     try:
-        if timetable == None:
-            timetable = self.session.my_timetable(
-                start=starttime, end=endtime
-            ).to_table()
-    except Error as err:
+        timetable = session.my_timetable(
+            start=starttime, end=endtime
+        ).to_table()
+    except Exception as err:
+        exit()
         return ["err", "Reading Timetable failed", f"Unknown Error: \"{err}\"!"]
     ret = []
     # somewhat comprehensible parser (might be a lie)
@@ -48,6 +48,8 @@ def get_table(self, starttime, endtime):
                     notes = []
                     if period.info != "":
                         notes.append(period.info)
+                    if period.substText != "":
+                        notes.append(period.substText)
                     if period.type == "ex":
                         notes.append("Exam")
                     if notes == []:
@@ -72,9 +74,10 @@ def get_table(self, starttime, endtime):
                         color = "red"
                     elif period.code == "irregular" or rooms_changed:
                         color = "orange"
+                    elif period.code_color != None:
+                        color = period.code_color
                     else:
                         color = "white"
-
                     period_specific_item = [subject.name, room_str, notes_str, color, period]
                     day_ret.append(period_specific_item)
                 blob_ret.append(day_ret)
@@ -83,5 +86,4 @@ def get_table(self, starttime, endtime):
     Structure of ret:
     list of "hours", each containing one list per day, each containing the structure in L89
     """
-    print(ret[0])
     return ret
