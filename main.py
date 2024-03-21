@@ -17,7 +17,7 @@ class colors:
     yellow = "\033[93m"
     red    = "\033[91m"
     reset  = "\033[0m"
-
+use_color = not "--no-color" in sys.argv
 
 # server, school, username, password
 credentials = [None, None, None, None]
@@ -88,7 +88,7 @@ for hour in timetable:
         for period_index in range(len(day)):
             period = sorted(day)[period_index]
             period_str = f" {period[0]} ({period[1]}) ".ljust(longest_entry)
-            if not "--no-color" in sys.argv:
+            if use_color:
                 if period[3] == "red":
                     period_str = colors.red + period_str + colors.reset
                 elif period[3] == "orange":
