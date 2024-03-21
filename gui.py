@@ -229,10 +229,18 @@ class MainWindow(QMainWindow):
         # set application icon
         self.setWindowIcon(QIcon(ico_path))
 
-        self.settings = QSettings('l-koehler', 'untis-py')
-        if "--delete-settings" in sys.argv:
-            self.delete_settings()
-        self.load_settings()
+        for index in range(len(sys.argv)):
+            if sys.argv[index] == '--credentials':
+                self.server   = sys.argv[index+1]
+                self.school   = sys.argv[index+2]
+                self.user     = sys.argv[index+3]
+                self.password = sys.argv[index+4]
+        if '--credentials' not in sys.argv:
+            self.settings = QSettings('l-koehler', 'untis-py')
+            self.load_settings()
+            if "--delete-settings" in sys.argv:
+                self.delete_settings()
+
         self.date_edit.setDate(QDate.currentDate())
         if not use_qt5:
             self.shortcut_current_week = QShortcut(QKeySequence('Down'), self)
