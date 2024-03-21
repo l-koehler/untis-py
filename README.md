@@ -33,9 +33,8 @@ Use `--qt5` to force the program to use PyQt5, it will otherwise
 use PyQt6 if available.  
 Use `--fake-data` to test the program without connecting to WebUntis.  
 Use `--delete-settings` to forget the stored login data.  
-
-Use `-t` or `--text-only` to not use an UI, instead outputting a formatted  
-table.  
+Use `-t` or `--text-only` to not use an UI,  
+instead outputting a formatted table.  
 Use `--no-color` to disable color codes.  
 It will output the current week by default, use `-o` or `--offset` to  
 change that week (for example `-o1` or `--offset 1` for the next week).  

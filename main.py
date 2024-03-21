@@ -10,22 +10,14 @@ if '-t' not in sys.argv and '--text-only' not in sys.argv:
     exit()
 
 # text-only mode
-if not '--no-colors' in sys.argv:
-    class colors:
-        blue   = "\033[94m"
-        cyan   = "\033[96m"
-        skip   = "\033[65m" # "no ideogram attributes", used to fix some mess with string lengths
-        yellow = "\033[93m"
-        red    = "\033[91m"
-        reset  = "\033[0m"
-else:
-    class colors:
-        blue   = ""
-        cyan   = ""
-        skip  = ""
-        yellow = ""
-        red    = ""
-        reset  = ""
+class colors:
+    blue   = "\033[94m"
+    cyan   = "\033[96m"
+    skip   = "\033[65m" # "no ideogram attributes", used to fix some mess with string lengths
+    yellow = "\033[93m"
+    red    = "\033[91m"
+    reset  = "\033[0m"
+
 
 # server, school, username, password
 credentials = [None, None, None, None]
@@ -96,14 +88,15 @@ for hour in timetable:
         for period_index in range(len(day)):
             period = sorted(day)[period_index]
             period_str = f" {period[0]} ({period[1]}) ".ljust(longest_entry)
-            if period[3] == "red":
-                period_str = colors.red + period_str + colors.reset
-            elif period[3] == "orange":
-                period_str = colors.yellow + period_str + colors.reset
-            elif period[3] != "white":
-                period_str = colors.cyan + period_str + colors.reset
-            else:
-                period_str = colors.skip + period_str + colors.reset
+            if not "--no-color" in sys.argv:
+                if period[3] == "red":
+                    period_str = colors.red + period_str + colors.reset
+                elif period[3] == "orange":
+                    period_str = colors.yellow + period_str + colors.reset
+                elif period[3] != "white":
+                    period_str = colors.cyan + period_str + colors.reset
+                else:
+                    period_str = colors.skip + period_str + colors.reset
             final_response[day_index] += period_str
             if len(day) != 1 and period_index != len(day)-1:
                 final_response[day_index] += "|"
