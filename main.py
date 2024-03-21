@@ -14,8 +14,7 @@ if not '--no-colors' in sys.argv:
     class colors:
         blue   = "\033[94m"
         cyan   = "\033[96m"
-        white  = "\033[97m"
-        green  = "\033[92m"
+        skip   = "\033[65m" # "no ideogram attributes", used to fix some mess with string lengths
         yellow = "\033[93m"
         red    = "\033[91m"
         reset  = "\033[0m"
@@ -23,7 +22,7 @@ else:
     class colors:
         blue   = ""
         cyan   = ""
-        green  = ""
+        skip  = ""
         yellow = ""
         red    = ""
         reset  = ""
@@ -82,16 +81,14 @@ timetable = api.get_table([], session, starttime, endtime)
 
 final_response = ["", "", "", "", ""]
 
-longest_entry = 0
+longest_entry = 4
 for hour in timetable:
     for day in hour:
         final_str = ""
         for period in day:
-            final_str += f" {period[0]} ({period[1]}) "
-            if len(day) != 1:
-                final_str += "|"
-    if len(final_str) > longest_entry:
-        longest_entry = len(final_str)
+            if len(f" {period[0]} ({period[1]}) ") > longest_entry:
+                longest_entry = len(f" {period[0]} ({period[1]}) ")
+longest_entry += 1
 
 for hour in timetable:
     for day_index in range(len(hour)):
@@ -106,7 +103,7 @@ for hour in timetable:
             elif period[3] != "white":
                 period_str = colors.cyan + period_str + colors.reset
             else:
-                period_str = colors.white + period_str + colors.reset
+                period_str = colors.skip + period_str + colors.reset
             final_response[day_index] += period_str
             if len(day) != 1 and period_index != len(day)-1:
                 final_response[day_index] += "|"
@@ -131,15 +128,7 @@ for day in final_response:
         if line != "":
             lsn_split_line = line
             for i in index_split_lsn:
-                 lsn_split_line = lsn_split_line[:i] + '│' + lsn_split_line[i+1:].ljust(longest_entry)
-            color_adjusted_line = ""
-            for lesson in lsn_split_line.split('│'):
-                color_adjusted_line += lesson
-                if "\033[0m" in lesson:
-                    color_adjusted_line += 'hi'
-                color_adjusted_line += '│'
-            color_adjusted_line = color_adjusted_line[:-1]
-
+                lsn_split_line = lsn_split_line[:i] + '│' + lsn_split_line[i+1:].ljust(longest_entry)
             print(f"║{lsn_split_line}║")
     default_bottom = ''.ljust(longest_entry, '═')
     for i in index_split_lsn:
