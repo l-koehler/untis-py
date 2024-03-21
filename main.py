@@ -15,13 +15,14 @@ class colors:
     cyan   = "\033[96m"
     skip   = "\033[65m" # "no ideogram attributes", used to fix some mess with string lengths
     yellow = "\033[93m"
+    green  = "\033[92m"
     red    = "\033[91m"
     reset  = "\033[0m"
 use_color = not "--no-color" in sys.argv
 
 # server, school, username, password
 credentials = [None, None, None, None]
-starttime = dt.date.today() + relativedelta(weekday=MO(-1))
+starttime = date.today() + relativedelta(weekday=MO(-1))
 for index in range(len(sys.argv)):
     if sys.argv[index] == '--credentials':
         if len(sys.argv) < index+5:
@@ -75,9 +76,9 @@ timetable = api.get_table([], session, starttime, endtime)
 
 """
 
-final_response = ["", "", "", "", ""]
+final_response = ["", "", "", "", "", "", ""]
 
-longest_entry = 4
+longest_entry = 11
 for hour in timetable:
     for day in hour:
         final_str = ""
@@ -107,11 +108,14 @@ for hour in timetable:
         final_response[day_index] = final_response[day_index].ljust(longest_entry)
         final_response[day_index] += "\n"
 
-weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 index = 0
-for day in final_response:
+for day in [day for day in final_response if day != ""]:
     day_as_ls = day.split('\n')
-    default_top = ('═ '+weekdays[index]+' ').ljust(longest_entry, '═')
+    if index == date.today().weekday() and use_color:
+        default_top = (f"═ {colors.green}{weekdays[index]}{colors.reset} ").ljust(longest_entry+len(colors.green+colors.reset), '═')
+    else:
+        default_top = (f"═ {weekdays[index]} ").ljust(longest_entry, '═')
     index_split_lsn = []
     for line in day_as_ls:
         for char_i in range(len(line)):

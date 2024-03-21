@@ -31,14 +31,17 @@ the uncompressed size is about 32 MB.
 #### Arguments
 Use `--qt5` to force the program to use PyQt5, it will otherwise  
 use PyQt6 if available.  
-Use `--fake-data` to test the program without connecting to WebUntis.  
+Use `--fake-data` to test the program without connecting to WebUntis  
+(not when using `--text-only`, only with the Qt UI).  
 Use `--delete-settings` to forget the stored login data.  
-Use `-t` or `--text-only` to not use an UI,  
-instead outputting a formatted table.  
-Use `--no-color` to disable color codes.  
-It will output the current week by default, use `-o` or `--offset` to  
-change that week (for example `-o1` or `--offset 1` for the next week).  
 If `--credentials <server> <school> <username> <password>` is passed to the  
 program, no PyQt-related librarys will be used, making usage feasible on a  
 minimal system without display server or Qt (but the credentials won't be  
 stored if set that way, maybe use an alias).  
+
+#### Terminal-only arguments
+Use `-t` or `--text-only` to not use an UI,  
+instead outputting a formatted table to the console.  
+Use `--offset <weeks>` or `-o<weeks>` to get another week.  
+The offset can be negative.  
+Use `--no-color` to disable color codes.
