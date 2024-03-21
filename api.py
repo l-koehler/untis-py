@@ -1,5 +1,4 @@
 import webuntis
-import datetime as dt
 
 def login(credentials):
     new_session = webuntis.Session(

@@ -6,17 +6,17 @@ use_qt5 = True
 if not "--qt5" in sys.argv:
     use_qt5 = False
     try:
-        from PyQt6.QtCore import QSize, Qt, QDate, QSettings
+        from PyQt6.QtCore import Qt, QDate, QSettings
         from PyQt6 import uic
-        from PyQt6.QtGui import QTextFormat, QShortcut, QKeySequence, QIcon
-        from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QBoxLayout
+        from PyQt6.QtGui import QShortcut, QKeySequence, QIcon
+        from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox
     except ImportError:
         use_qt5 = True
 if use_qt5:
-    from PyQt5.QtCore import QSize, Qt, QDate, QSettings
+    from PyQt5.QtCore import Qt, QDate, QSettings
     from PyQt5 import uic
-    from PyQt5.QtGui import QTextFormat, QKeySequence, QIcon
-    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QVBoxLayout, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QBoxLayout
+    from PyQt5.QtGui import QIcon
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox
 
 class LoginPopup(QDialog):
     def save(self):

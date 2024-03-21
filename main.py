@@ -1,5 +1,5 @@
-import sys, os, api
-import datetime as dt
+import sys, api
+from datetime import date
 from dateutil.relativedelta import relativedelta, FR, MO
 
 if '-t' not in sys.argv and '--text-only' not in sys.argv:
