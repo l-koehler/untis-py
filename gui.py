@@ -231,6 +231,10 @@ class MainWindow(QMainWindow):
 
         for index in range(len(sys.argv)):
             if sys.argv[index] == '--credentials':
+                if len(sys.argv) < index+5:
+                    print(f"--credentials takes 4 arguments, {len(sys.argv)-index-1} were passed!")
+                    print("use --credentials <server> <school> <username> <password>")
+                    exit(1)
                 self.server   = sys.argv[index+1]
                 self.school   = sys.argv[index+2]
                 self.user     = sys.argv[index+3]

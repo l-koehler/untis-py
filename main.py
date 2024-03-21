@@ -24,6 +24,10 @@ credentials = [None, None, None, None]
 starttime = dt.date.today() + relativedelta(weekday=MO(-1))
 for index in range(len(sys.argv)):
     if sys.argv[index] == '--credentials':
+        if len(sys.argv) < index+5:
+            print(f"--credentials takes 4 arguments, {len(sys.argv)-index-1} were passed!")
+            print("use --credentials <server> <school> <username> <password>")
+            exit(1)
         credentials[0] = sys.argv[index+1]
         credentials[1] = sys.argv[index+2]
         credentials[2] = sys.argv[index+3]
