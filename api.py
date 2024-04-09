@@ -59,14 +59,18 @@ def get_table(cache, session, starttime, endtime):
                         notes_str = "; ".join(notes)
 
                     # string indicating room
-                    rooms_changed = False
-                    if len(period.rooms) == 0:
-                        room_str = ""
-                    elif period.original_rooms != period.rooms and period.original_rooms:
-                        room_str = f"{period.original_rooms[0].name} -> {period.rooms[0].name}"
+                    try:
+                        rooms_changed = False
+                        if len(period.rooms) == 0:
+                            room_str = ""
+                        elif period.original_rooms != period.rooms and period.original_rooms:
+                            room_str = f"{period.original_rooms[0].name} -> {period.rooms[0].name}"
+                            rooms_changed = True
+                        else:
+                            room_str = period.rooms[0].name
+                    except IndexError:
                         rooms_changed = True
-                    else:
-                        room_str = period.rooms[0].name
+                        room_str = "Unknown"
 
                     # string indicating color
                     if period.code == "cancelled":

@@ -58,9 +58,12 @@ class InfoPopup(QDialog):
                 self.lesson_tab.addTab(QLabel(f"<h4>Example Entry</h4>\n{lesson[1]}"), lesson[0])
                 continue
 
-            room_str = f"{full_repl.rooms[0].name}"
-            if full_repl.original_rooms != full_repl.rooms and full_repl.original_rooms != []:
-                room_str += f" (originally in {full_repl.original_rooms[0].name})"
+            try:
+                room_str = f"{full_repl.rooms[0].name}"
+                if full_repl.original_rooms != full_repl.rooms and full_repl.original_rooms != []:
+                    room_str += f" (originally in {full_repl.original_rooms[0].name})"
+            except IndexError:
+                room_str = "Unknown"
 
             if full_repl.activityType != "Unterricht": # why is it localized qwq
                 status_str = full_repl.activityType
