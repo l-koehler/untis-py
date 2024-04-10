@@ -129,7 +129,7 @@ class MainWindow(QMainWindow):
         # try to start a new session
         credentials = [self.server, self.school, self.user, self.password]
         if None not in credentials and '' not in credentials:
-            self.session = api.login(self, credentials)
+            self.session = api.login(credentials)
             if type(self.session) != list: # if login successful
                 self.fetch_week()
             else:
