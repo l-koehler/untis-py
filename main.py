@@ -7,7 +7,7 @@ if '-t' not in sys.argv and '--text-only' not in sys.argv:
     app = gui.QApplication(sys.argv)
     window = gui.MainWindow()
     app.exec()
-    exit()
+    sys.exit(0)
 
 # text-only mode
 class colors:
