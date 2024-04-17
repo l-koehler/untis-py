@@ -185,7 +185,7 @@ class MainWindow(QMainWindow):
                     if lesson[2] != '':
                         richtext += f"<br><small>{lesson[2]}</small>"
                     if lesson[3] != 'white':
-                        stylesheet = f"border-radius:4px; background-color:{lesson[3]}"
+                        stylesheet = f"padding-right:4px; padding-left:4px; margin-top: 1px; margin-bottom:1px; border-radius:4px; background-color:{lesson[3]}"
                         lesson_widget.setStyleSheet(stylesheet)
                     lesson_widget.setContentsMargins(2,0,0,0)
                     lesson_widget.setText(richtext)
