@@ -31,11 +31,13 @@ def get_table(cache, session, starttime, endtime):
         exit()
         return ["err", "Reading Timetable failed", f"Unknown Error: \"{err}\"!"]
     ret = []
+    # add one because same-day still is one day
+    time_range = range((endtime - starttime).days + 1)
     # somewhat comprehensible parser (might be a lie)
     for vertical_time_range in timetable:
         vertical_time = vertical_time_range[0]
         for weird_blob in vertical_time_range[1:]:
-            blob_ret = [[],[],[],[],[]]
+            blob_ret = [[] for _ in time_range]
             for day in weird_blob:
                 day_n = (day[0] - starttime).days
                 lesson = day[1]
