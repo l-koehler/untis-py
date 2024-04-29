@@ -35,9 +35,9 @@ def get_table(cache, session, starttime, endtime):
     for vertical_time_range in timetable:
         vertical_time = vertical_time_range[0]
         for weird_blob in vertical_time_range[1:]:
-            blob_ret = []
+            blob_ret = [[],[],[],[],[]]
             for day in weird_blob:
-                #date = day[0]
+                day_n = (day[0] - starttime).days
                 lesson = day[1]
                 day_ret = []
                 for period in list(lesson):
@@ -83,7 +83,7 @@ def get_table(cache, session, starttime, endtime):
                         color = "white"
                     period_specific_item = [subject.name, room_str, notes_str, color, period]
                     day_ret.append(period_specific_item)
-                blob_ret.append(day_ret)
+                blob_ret[day_n] = day_ret
             ret.append(blob_ret)
     """"
     Structure of ret:
