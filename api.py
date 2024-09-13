@@ -89,6 +89,6 @@ def get_table(cache, session, starttime, endtime):
             ret.append(blob_ret)
     """"
     Structure of ret:
-    list of "hours", each containing one list per day, each containing the structure in L89
+    list of "hours", each containing one list per day, each containing a period_specific_item
     """
     return ret
