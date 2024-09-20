@@ -18,7 +18,7 @@ if [[ "$*" == *"--system"* || "$*" == *"-s"* ]]; then
     B_DIR="/usr/bin"
     U_MSG="Check if this installation is local (inside \$HOME)"
 else
-    if [ $(id -u) -e 0 ]; then
+    if [ $(id -u) -eq 0 ]; then
         echo "Refusing to (un)install locally with root permission!"
         echo "Rerun this script without root permissions or perform a system-wide (un)install."
         exit 1
