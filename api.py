@@ -23,12 +23,13 @@ def get_cached(cache, starttime):
             return [True, cache_entry[1]]
     return ["err", "Reading Timetable failed", f"Week not cached, but cache-only mode active!"]
 
-def get_table(cache, session, starttime, endtime):
+def get_table(cache, session, starttime, endtime, no_cache=False):
     # try loading from cache
     timetable = None
-    for cache_entry in cache:
-        if cache_entry[0] == starttime:
-            return [True, cache_entry[1]]
+    if not no_cache:
+        for cache_entry in cache:
+            if cache_entry[0] == starttime:
+                return [True, cache_entry[1]]
     # didnt load, ask the server
     try:
         timetable = session.my_timetable(

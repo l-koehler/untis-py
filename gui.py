@@ -23,6 +23,13 @@ class QFrame_click(QFrame):
     def mousePressEvent(self, ev):
         self.clicked.emit()
 
+def size_policy():
+    if use_qt5:
+        return QtWidgets.QSizePolicy
+    else:
+        return QtWidgets.QSizePolicy.Policy
+
+
 class LoginPopup(QDialog):
     def save(self):
         self.settings.setValue('server', self.server_le.text())
@@ -35,8 +42,7 @@ class LoginPopup(QDialog):
         self.resize(172, 244)
         self.dialog_btnb = QtWidgets.QDialogButtonBox(self)
         self.dialog_btnb.setGeometry(QtCore.QRect(0, 210, 161, 32))
-        self.dialog_btnb.setOrientation(QtCore.Qt.Horizontal)
-        self.dialog_btnb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+
         self.server_le = QtWidgets.QLineEdit(self)
         self.server_le.setGeometry(QtCore.QRect(10, 30, 151, 22))
         self.server_lbl = QtWidgets.QLabel(self)
@@ -57,8 +63,16 @@ class LoginPopup(QDialog):
         self.password_lbl.setText("Password:")
         self.password_le = QtWidgets.QLineEdit(self)
         self.password_le.setGeometry(QtCore.QRect(10, 180, 151, 22))
-        self.password_le.setEchoMode(QtWidgets.QLineEdit.PasswordEchoOnEdit)
         
+        if (use_qt5):
+            self.dialog_btnb.setOrientation(QtCore.Qt.Horizontal)
+            self.dialog_btnb.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+            self.password_le.setEchoMode(QtWidgets.QLineEdit.PasswordEchoOnEdit)
+        else:
+            self.dialog_btnb.setOrientation(QtCore.Qt.Orientation.Horizontal)
+            self.dialog_btnb.setStandardButtons(QtWidgets.QDialogButtonBox.StandardButton.Cancel|QtWidgets.QDialogButtonBox.StandardButton.Ok)
+            self.password_le.setEchoMode(QtWidgets.QLineEdit.EchoMode.PasswordEchoOnEdit)
+
         self.dialog_btnb.accepted.connect(self.accept) # type: ignore
         self.dialog_btnb.rejected.connect(self.reject) # type: ignore
         
@@ -77,9 +91,11 @@ class InfoPopup(QDialog):
         self.close_btn = QtWidgets.QPushButton(self)
         self.close_btn.setGeometry(QtCore.QRect(10, 250, 231, 25))
         self.close_btn.setText("Close")
+        self.close_btn.pressed.connect(self.close)
         if (parent.session == None or parent.force_cache):
             self.warning = QLabel(self)
-            self.warning.setText("Lesson Details not available in cache-only mode!")
+            self.warning.setText("<h2>Unavailable!</h2><p>Lesson Details are not available<br>in cache-only mode.</p><p>To disable cache-only mode,<br>restart the program.</p>")
+            self.warning.setWordWrap(True)
             return
         if (parent.week_is_cached):
             parent.fetch_week(True)
@@ -160,68 +176,60 @@ class MainWindow(QMainWindow):
     def setupUi(self, MainWindow):
         MainWindow.setWindowTitle("Untis")
         MainWindow.resize(1116, 674)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(size_policy().Expanding, size_policy().Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
         MainWindow.setSizePolicy(sizePolicy)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(size_policy().Expanding, size_policy().Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.centralwidget.sizePolicy().hasHeightForWidth())
         self.centralwidget.setSizePolicy(sizePolicy)
         self.centralwidget.setAutoFillBackground(True)
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
-        spacerItem = QtWidgets.QSpacerItem(20, 5, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        spacerItem = QtWidgets.QSpacerItem(20, 5, size_policy().Minimum, size_policy().Fixed)
         self.verticalLayout.addItem(spacerItem)
         self.top_bar_qhb = QtWidgets.QHBoxLayout()
-        spacerItem1 = QtWidgets.QSpacerItem(10, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        spacerItem1 = QtWidgets.QSpacerItem(10, 20, size_policy().Fixed, size_policy().Minimum)
         self.top_bar_qhb.addItem(spacerItem1)
         self.prev_btn = QtWidgets.QToolButton(self.centralwidget)
         self.prev_btn.setText("")
-        self.prev_btn.setArrowType(QtCore.Qt.LeftArrow)
         self.top_bar_qhb.addWidget(self.prev_btn)
-        spacerItem2 = QtWidgets.QSpacerItem(100, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
+        spacerItem2 = QtWidgets.QSpacerItem(100, 20, size_policy().Maximum, size_policy().Minimum)
         self.top_bar_qhb.addItem(spacerItem2)
         self.login_btn = QtWidgets.QPushButton(self.centralwidget)
         self.login_btn.setText("Login")
         self.top_bar_qhb.addWidget(self.login_btn)
-        spacerItem3 = QtWidgets.QSpacerItem(100, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
+        spacerItem3 = QtWidgets.QSpacerItem(100, 20, size_policy().Maximum, size_policy().Minimum)
         self.top_bar_qhb.addItem(spacerItem3)
         self.reload_btn = QtWidgets.QPushButton(self.centralwidget)
         self.reload_btn.setText("Reload")
         self.top_bar_qhb.addWidget(self.reload_btn)
-        spacerItem4 = QtWidgets.QSpacerItem(100, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
+        spacerItem4 = QtWidgets.QSpacerItem(100, 20, size_policy().Maximum, size_policy().Minimum)
         self.top_bar_qhb.addItem(spacerItem4)
         self.date_edit = QtWidgets.QDateEdit(self.centralwidget)
-        self.date_edit.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         self.date_edit.setDateTime(QtCore.QDateTime(QtCore.QDate(2024, 2, 16), QtCore.QTime(0, 0, 0)))
-        self.date_edit.setCurrentSection(QtWidgets.QDateTimeEdit.DaySection)
         self.date_edit.setCalendarPopup(True)
         self.date_edit.setCurrentSectionIndex(2)
         self.top_bar_qhb.addWidget(self.date_edit)
-        spacerItem5 = QtWidgets.QSpacerItem(100, 20, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Minimum)
+        spacerItem5 = QtWidgets.QSpacerItem(100, 20, size_policy().Maximum, size_policy().Minimum)
         self.top_bar_qhb.addItem(spacerItem5)
         self.next_btn = QtWidgets.QToolButton(self.centralwidget)
-        self.next_btn.setArrowType(QtCore.Qt.RightArrow)
+
         self.top_bar_qhb.addWidget(self.next_btn)
-        spacerItem6 = QtWidgets.QSpacerItem(10, 20, QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Minimum)
+        spacerItem6 = QtWidgets.QSpacerItem(10, 20, size_policy().Fixed, size_policy().Minimum)
         self.top_bar_qhb.addItem(spacerItem6)
         self.verticalLayout.addLayout(self.top_bar_qhb)
         self.timetable = QtWidgets.QTableWidget(self.centralwidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(size_policy().Expanding, size_policy().Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.timetable.sizePolicy().hasHeightForWidth())
         self.timetable.setSizePolicy(sizePolicy)
         self.timetable.setAutoFillBackground(True)
-        self.timetable.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        self.timetable.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        self.timetable.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.timetable.setAlternatingRowColors(True)
-        self.timetable.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.timetable.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.timetable.setShowGrid(False)
         self.timetable.setRowCount(8)
         self.timetable.setColumnCount(5)
@@ -232,6 +240,18 @@ class MainWindow(QMainWindow):
         self.timetable.verticalHeader().setDefaultSectionSize(70)
         self.timetable.verticalHeader().setMinimumSectionSize(70)
         self.verticalLayout.addWidget(self.timetable)
+        if use_qt5:
+            self.next_btn.setArrowType(QtCore.Qt.RightArrow)
+            self.prev_btn.setArrowType(QtCore.Qt.LeftArrow)
+            self.date_edit.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
+            self.timetable.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+            self.timetable.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        else:
+            self.next_btn.setArrowType(QtCore.Qt.ArrowType.RightArrow)
+            self.prev_btn.setArrowType(QtCore.Qt.ArrowType.LeftArrow)
+            self.date_edit.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.DefaultContextMenu)
+            self.timetable.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel)
+            self.timetable.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollMode.ScrollPerPixel)
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         MainWindow.setStatusBar(self.statusbar)
@@ -263,7 +283,7 @@ class MainWindow(QMainWindow):
     def login_popup(self):
         popup = LoginPopup(self.settings)
         popup.exec()
-        self.load_settings()
+        self.load_settings(False)
         # try to start a new session
         credentials = [self.server, self.school, self.user, self.password]
         if None not in credentials and '' not in credentials:
@@ -293,7 +313,7 @@ class MainWindow(QMainWindow):
             if (self.force_cache):
                 self.data = api.get_cached(self.cached_timetable, monday)
             else:
-                self.data = api.get_table(self.cached_timetable, self.session, monday, friday)
+                self.data = api.get_table(self.cached_timetable, self.session, monday, friday, replace_cache)
             self.week_is_cached = self.data[0]
             self.data = self.data[1]
         else:
@@ -396,6 +416,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.settings = QSettings('l-koehler', 'untis-py')
+        self.is_interactive = False
         self.load_settings('--credentials' in sys.argv) # don't overwrite credentials true/false
 
         if "--delete-settings" in sys.argv:

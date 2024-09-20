@@ -1,15 +1,21 @@
-with import <nixpkgs> {};
+let
+  pkgs = import <nixpkgs> {};
 
-pkgs.mkShell {
+  python = pkgs.python3.override {
+    self = python;
+    packageOverrides = pyfinal: pyprev: {
+      webuntis = pyfinal.callPackage ./webuntis.nix { };
+      py-dateutil = pyfinal.callPackage ./python-dateutil.nix { };
+    };
+  };
+
+in pkgs.mkShell {
   packages = [
-    pkgs.python312
-    pkgs.python312Packages.pip
-    pkgs.python312Packages.pyqt6
+    (python.withPackages (python-pkgs: [
+      python-pkgs.pyqt6
+      python-pkgs.webuntis
+      python-pkgs.requests
+      python-pkgs.python-dateutil
+    ]))
   ];
-  # 'webuntis' and 'py-dateutil' are not packaged for Nix
-  shellHook = ''
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install webuntis py-dateutil
-  '';
 }
