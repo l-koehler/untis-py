@@ -1,4 +1,4 @@
-import webuntis
+import webuntis, json
 
 def login(credentials):
     new_session = webuntis.Session(
@@ -26,10 +26,12 @@ def get_table(cache, session, starttime, endtime):
     try:
         timetable = session.my_timetable(
             start=starttime, end=endtime
-        ).to_table()
+        )
+        timetable = timetable.to_table()
     except Exception as err:
-        exit()
-        return ["err", "Reading Timetable failed", f"Unknown Error: \"{err}\"!"]
+        if (err == "startDate and endDate are not within a single school year."):
+            return ["err", "Reading Timetable failed", "Weeks spanning several school years are not supported!"]
+        return ["err", "Reading Timetable failed", f"Server replied with error: \"{err}\"!"]
     ret = []
     # add one because same-day still is one day
     time_range = range((endtime - starttime).days + 1)
@@ -91,4 +93,6 @@ def get_table(cache, session, starttime, endtime):
     Structure of ret:
     list of "hours", each containing one list per day, each containing a period_specific_item
     """
+    print("API returned");
+    cache.append([starttime, ret])
     return ret

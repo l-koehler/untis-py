@@ -37,17 +37,18 @@ pyinstaller --onefile --add-data="mainwindow.ui;." --add-data="login.ui;." --add
 #### Arguments
 Use `--qt5` to force the program to use PyQt5, it will otherwise  
 use PyQt6 if available.  
-Use `--fake-data` to test the program without connecting to WebUntis  
+Use `--fake-data` to test the program without connecting to WebUntis.  
 (not when using `--text-only`, only with the Qt UI).  
 Use `--delete-settings` to forget the stored login data.  
-If `--credentials <server> <school> <username> <password>` is passed to the  
-program, no PyQt-related librarys will be used, making usage feasible on a  
-minimal system without display server or Qt (but the credentials won't be  
-stored if set that way, maybe use an alias or edit the .desktop file).
+If `--credentials <server> <school> <username> <password>` is  
+passed to the program, QSettings will not be used.  
+In combination with `--text-only`, this allows for usage of the program without  
+installing PyQt.  
 
 #### Terminal-only arguments
 Use `-t` or `--text-only` to not use an UI,  
 instead outputting a formatted table to the console.  
+This will also disable using the cache for timetable data.  
 Use `--offset <weeks>` or `-o<weeks>` to get another week.  
 The offset can be negative.  
 Use `--no-color` to disable color codes.

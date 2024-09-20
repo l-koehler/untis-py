@@ -18,7 +18,7 @@ if use_qt5:
     from PyQt5.QtGui import QIcon
     from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox
 
-class QWidget_click(QWidget):
+class QFrame_click(QFrame):
     clicked = pyqtSignal()
     def mousePressEvent(self, ev):
         self.clicked.emit()
@@ -84,10 +84,21 @@ class InfoPopup(QDialog):
         col = parent.timetable.currentColumn()
         row = parent.timetable.currentRow()
         parent.timetable.selectionModel().clear()
-        
+        self.close_btn.pressed.connect(self.close)
         # richtext info about the lesson
-        hour_data = parent.data[row][col]
+        try:
+            hour_data = parent.data[row][col]
+        except:
+            hour_data = [None]
+            
+        
         for i in range(len(hour_data)):
+            if hour_data == [None]:
+                self.content = QLabel(self)
+                self.content.setText("<h2>No Lesson planned!</h2>")
+                self.content.setWordWrap(True)
+                continue
+                
             lesson = hour_data[i]
             full_repl = lesson[-1]
             if full_repl == None:
@@ -207,7 +218,9 @@ class MainWindow(QMainWindow):
         self.timetable.setAlternatingRowColors(True)
         self.timetable.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.timetable.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        self.timetable.setShowGrid(True)
+        
+        self.timetable.setShowGrid(False)
+        
         self.timetable.setRowCount(8)
         self.timetable.setColumnCount(5)
         self.timetable.horizontalHeader().setCascadingSectionResizes(False)
@@ -231,11 +244,13 @@ class MainWindow(QMainWindow):
             self.fetch_week()
         self.current_date = new_date
 
-    def load_settings(self):
-        self.server   = self.settings.value('server')
-        self.school   = self.settings.value('school')
-        self.user     = self.settings.value('user')
-        self.password = self.settings.value('password')
+    def load_settings(self, no_set_credentials):
+        if not no_set_credentials:
+            self.server   = self.settings.value('server')
+            self.school   = self.settings.value('school')
+            self.user     = self.settings.value('user')
+            self.password = self.settings.value('password')
+        self.cached_timetable = self.settings.value('cached_timetable') or []
 
     def delete_settings(self):
         self.settings.clear()
@@ -282,46 +297,69 @@ class MainWindow(QMainWindow):
             )
             return
 
-        # add entry to cache, if not yet cached
-        if not monday in [i[0] for i in self.cached_timetable]:
-            self.cached_timetable.append([monday, self.data])
-
         self.timetable.setRowCount(len(self.data))
 
         for row in range(len(self.data)):
             for col in range(len(self.data[row])):
-                widget = QWidget_click()
+                widget = QFrame_click()
                 try:
                     entry_data = self.data[row][col]
+                    # add the on-click function for lesson info. dont change the lambda it barely works as-is
                     if (len(entry_data) != 0):
                         fn = lambda row=row, col=col: f"{self.timetable.setCurrentCell(row, col)}\n{self.info_popup()}"
                         widget.clicked.connect(fn)
                 except IndexError:
                     entry_data = []
-                # fucked-up code golf bs for complex lambdas :3c
                 layout = QHBoxLayout()
+                layout.setContentsMargins(0, 0, 0, 0);
+                
+                if (col != 0):
+                    line = QFrame()
+                    line.setFrameShape(QFrame.Shape.VLine)
+                    line.setStyleSheet("background-color:white;")
+                    line.setMaximumWidth(1)
+                    layout.addWidget(line)
+                else:
+                    layout.addSpacing(6)
+
                 entry_data.sort()
                 for i in range(len(entry_data)):
                     lesson = entry_data[i]
                     lesson_widget = QLabel()
                     lesson_widget.setTextFormat(Qt.TextFormat.RichText)
                     richtext = f"<b>{lesson[0]}</b><br>{lesson[1]}"
+                    stylesheet = f"padding-right:4px; padding-left:4px; margin-top: 4px; margin-bottom:4px; border-radius:4px;"
+                    if lesson[3] != "white":
+                         stylesheet+=f"background-color:{lesson[3]};"
                     if lesson[2] != '':
                         richtext += f"<br><small>{lesson[2]}</small>"
-                    if lesson[3] != 'white':
-                        stylesheet = f"padding-right:4px; padding-left:4px; margin-top: 1px; margin-bottom:1px; border-radius:4px; background-color:{lesson[3]}"
-                        lesson_widget.setStyleSheet(stylesheet)
-                    lesson_widget.setContentsMargins(2,0,0,0)
+                    lesson_widget.setStyleSheet(stylesheet)
                     lesson_widget.setText(richtext)
                     layout.addWidget(lesson_widget)
                     if len(entry_data) != 1 and i+1 != len(entry_data):
                         # add separator
                         line = QFrame()
                         line.setFrameShape(QFrame.Shape.VLine)
-                        line.setStyleSheet("background-color:lightgray;color:lightgray")
+                        line.setStyleSheet("background-color:gray;margin-top:7px;margin-bottom:7px;border-radius:5px")
                         layout.addWidget(line)
+                
+                if (len(entry_data) == 0):
+                   layout.addWidget(QWidget())
+                
+                
+                if (col != len(self.data[row])-1):
+                    line = QFrame()
+                    line.setFrameShape(QFrame.Shape.VLine)
+                    line.setStyleSheet("background-color:white;")
+                    line.setMaximumWidth(1)
+                    layout.addWidget(line)
+                else:
+                    layout.addSpacing(6)
+                
                 widget.setLayout(layout)
+                
                 self.timetable.setCellWidget(row, col, widget)
+                
         self.is_interactive = True
 
     def prev_week(self):
@@ -343,9 +381,9 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        if '--credentials' not in sys.argv:
-            self.settings = QSettings('l-koehler', 'untis-py')
-            self.load_settings()
+        self.settings = QSettings('l-koehler', 'untis-py')
+        self.load_settings('--credentials' in sys.argv) # don't overwrite credentials true/false
+
         if "--delete-settings" in sys.argv:
                 self.delete_settings()
         if getattr(sys, 'frozen', False):
@@ -387,7 +425,6 @@ class MainWindow(QMainWindow):
         self.show()
         # if the credentials are already all set, log in automatically
         self.data = None
-        self.cached_timetable = [] # lists of (monday, data)
         credentials = [self.server, self.school, self.user, self.password]
         if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv:
             self.session = api.login(credentials)
@@ -404,3 +441,11 @@ class MainWindow(QMainWindow):
             self.fetch_week()
         else:
             self.session = None
+
+    def closeEvent(self, event):
+        # save the new cache before closing
+        try:
+            self.settings.setValue('cached_timetable', self.cached_timetable)
+        except:
+            pass
+        event.accept()
