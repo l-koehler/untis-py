@@ -70,13 +70,20 @@ class LoginPopup(QDialog):
         self.dialog_btnb.accepted.connect(self.save)
 
 class InfoPopup(QDialog):
-    def __init__(self, parent):
+    def __init__(self, parent):        
         QWidget.__init__(self)
         self.setWindowTitle("Lesson Info")
         self.resize(249, 283)
         self.close_btn = QtWidgets.QPushButton(self)
         self.close_btn.setGeometry(QtCore.QRect(10, 250, 231, 25))
         self.close_btn.setText("Close")
+        if (parent.session == None or parent.force_cache):
+            self.warning = QLabel(self)
+            self.warning.setText("Lesson Details not available in cache-only mode!")
+            return
+        if (parent.week_is_cached):
+            parent.fetch_week(True)
+            
         self.lesson_tab = QtWidgets.QTabWidget(self)
         self.lesson_tab.setGeometry(QtCore.QRect(10, 10, 231, 231))
         self.lesson_tab.setCurrentIndex(1)
@@ -101,9 +108,6 @@ class InfoPopup(QDialog):
                 
             lesson = hour_data[i]
             full_repl = lesson[-1]
-            if full_repl == None:
-                self.lesson_tab.addTab(QLabel(f"<h4>Example Entry</h4>\n{lesson[1]}"), lesson[0])
-                continue
 
             try:
                 room_str = f"{full_repl.rooms[0].name}"
@@ -248,7 +252,10 @@ class MainWindow(QMainWindow):
             self.school   = self.settings.value('school')
             self.user     = self.settings.value('user')
             self.password = self.settings.value('password')
-        self.cached_timetable = self.settings.value('cached_timetable') or []
+        if not "--no-cache" in sys.argv:
+            self.cached_timetable = self.settings.value('cached_timetable') or []
+        else:
+            self.cached_timetable = []
 
     def delete_settings(self):
         self.settings.clear()
@@ -276,8 +283,7 @@ class MainWindow(QMainWindow):
             popup = InfoPopup(self)
             popup.exec()
 
-    def fetch_week(self):
-        self.is_interactive = False
+    def fetch_week(self, replace_cache=False):
         selected_day = self.date_edit.date().toPyDate()
         week_number = selected_day.isocalendar()[1]
         monday = dt.date.fromisocalendar(selected_day.year, week_number, 1)
@@ -288,6 +294,8 @@ class MainWindow(QMainWindow):
                 self.data = api.get_cached(self.cached_timetable, monday)
             else:
                 self.data = api.get_table(self.cached_timetable, self.session, monday, friday)
+            self.week_is_cached = self.data[0]
+            self.data = self.data[1]
         else:
             self.data = [[[['mo 1', 'regular lesson', '', 'white', None]], [['tu 1', 'regular lesson', '', 'white', None]]], [[['mo 2', 'single, red', '', 'red', None]], [['tu 2', 'single, orange', '', 'orange', None]]], [[['mo 3', 'half, white', '', 'white', None], ['mo 3', 'second half', '', 'white', None]], [['hello', 'half, red', '', 'red', None], ['world', 'other half', '', 'white', None]]]]
         if self.data != [] and self.data[0] == "err":
@@ -299,6 +307,11 @@ class MainWindow(QMainWindow):
             return
 
         self.timetable.setRowCount(len(self.data))
+        
+        if replace_cache:
+            return;
+        
+        self.is_interactive = False
 
         for row in range(len(self.data)):
             for col in range(len(self.data[row])):
@@ -362,7 +375,7 @@ class MainWindow(QMainWindow):
                 self.timetable.setCellWidget(row, col, widget)
                 
         self.is_interactive = True
-
+    
     def prev_week(self):
         self.date_edit.setDate(self.date_edit.date().addDays(-7))
 
@@ -386,7 +399,7 @@ class MainWindow(QMainWindow):
         self.load_settings('--credentials' in sys.argv) # don't overwrite credentials true/false
 
         if "--delete-settings" in sys.argv:
-                self.delete_settings()
+            self.delete_settings()
         if getattr(sys, 'frozen', False):
             ico_path = os.path.join(sys._MEIPASS, "icon.ico")
         else:
@@ -424,6 +437,7 @@ class MainWindow(QMainWindow):
         self.reload_btn.pressed.connect(self.reload_all)
         self.timetable.setHorizontalHeaderLabels(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
         self.force_cache = False
+        self.week_is_cached = False
         self.show()
         # if the credentials are already all set, log in automatically
         self.data = None
@@ -455,8 +469,6 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         # save the new cache before closing
-        try:
+        if not "--no-cache" in sys.argv:
             self.settings.setValue('cached_timetable', self.cached_timetable)
-        except:
-            pass
         event.accept()

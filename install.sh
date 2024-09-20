@@ -8,11 +8,21 @@ if [[ "$*" == *"--help"* || "$*" == *"-h"* ]]; then
 fi
 
 if [[ "$*" == *"--system"* || "$*" == *"-s"* ]]; then
+    if [ $(id -u) -ne 0 ]; then
+        echo "Cannot (un)install system-wide without root permission!" 
+        echo "Rerun this script with root permissions or perform a local (un)install."
+        exit 1
+    fi
     E_DIR="/opt/untis-py"
     D_PATH="/usr/share/applications"
     B_DIR="/usr/bin"
     U_MSG="Check if this installation is local (inside \$HOME)"
 else
+    if [ $(id -u) -e 0 ]; then
+        echo "Refusing to (un)install locally with root permission!"
+        echo "Rerun this script without root permissions or perform a system-wide (un)install."
+        exit 1
+    fi
     E_DIR="$HOME/.local/share/untis-py" # not exactly standardized, there does not appear to be a proper place for multi-file programs in $HOME
     D_PATH="$HOME/.local/share/applications"
     B_DIR="$HOME/.local/bin"

@@ -20,7 +20,7 @@ def get_cached(cache, starttime):
     timetable = None
     for cache_entry in cache:
         if cache_entry[0] == starttime:
-            return cache_entry[1]
+            return [True, cache_entry[1]]
     return ["err", "Reading Timetable failed", f"Week not cached, but cache-only mode active!"]
 
 def get_table(cache, session, starttime, endtime):
@@ -28,7 +28,7 @@ def get_table(cache, session, starttime, endtime):
     timetable = None
     for cache_entry in cache:
         if cache_entry[0] == starttime:
-            return cache_entry[1]
+            return [True, cache_entry[1]]
     # didnt load, ask the server
     try:
         timetable = session.my_timetable(
@@ -100,6 +100,5 @@ def get_table(cache, session, starttime, endtime):
     Structure of ret:
     list of "hours", each containing one list per day, each containing a period_specific_item
     """
-    print("API returned");
     cache.append([starttime, ret])
-    return ret
+    return [False, ret]

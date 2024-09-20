@@ -34,12 +34,14 @@ set PYTHONOPTIMIZE=2
 pyinstaller --onefile --add-data="icon.ico;." --windowed --icon="./icon.ico" main.py
 ```
 
-#### ArgumentsNone
+#### Arguments
 Use `--qt5` to force the program to use PyQt5, it will otherwise  
 use PyQt6 if available.  
 Use `--fake-data` to test the program without connecting to WebUntis.  
 (not when using `--text-only`, only with the Qt UI).  
-Use `--delete-settings` to forget the stored login data.  
+Use `--delete-settings` to forget the stored login data and cache.  
+Use `--no-cache` to (only this time) skip loading/saving cache.  
+This does not disable caching entirely, just the loading/saving!  
 If `--credentials <server> <school> <username> <password>` is  
 passed to the program, QSettings will not be used.  
 In combination with `--text-only`, this allows for usage of the program  
