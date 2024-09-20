@@ -31,7 +31,7 @@ You can re-run the script without data loss at least for minor updates.
 Create a .exe (`./dist/main.exe`)  
 ```
 set PYTHONOPTIMIZE=2
-pyinstaller --onefile --add-data="mainwindow.ui;." --add-data="login.ui;." --add-data="lesson_info.ui;." --add-data="icon.ico;." --windowed --icon="./icon.ico" main.py
+pyinstaller --onefile --add-data="icon.ico;." --windowed --icon="./icon.ico" main.py
 ```
 
 #### ArgumentsNone
