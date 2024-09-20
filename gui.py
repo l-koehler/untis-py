@@ -463,7 +463,7 @@ class MainWindow(QMainWindow):
         # if the credentials are already all set, log in automatically
         self.data = None
         credentials = [self.server, self.school, self.user, self.password]
-        if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv:
+        if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
             self.session = api.login(credentials)
             if type(self.session) != list: # if login successful
                 self.fetch_week()
@@ -475,18 +475,22 @@ class MainWindow(QMainWindow):
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
                 )
                 self.force_cache = (box.exec() == QMessageBox.StandardButton.Yes)
-                if (self.force_cache):
-                    cache_warning = QLabel("<span style='color:#F44;'>Cache-only mode active, restart to disable!</span>")
-                    self.verticalLayout.addWidget(cache_warning)
-                    # resize to just-enough-to-fit unless it is already big enough
-                    self.resize(self.width(), max(self.height(), 698))
-                    self.hide(); self.show()
-                    self.fetch_week()
                 self.session = None
         elif '--fake-data' in sys.argv:
             self.fetch_week()
+        elif '--force-cache' in sys.argv:
+            self.force_cache = True
+            self.session = None
         else:
             self.session = None
+        
+        if self.force_cache:
+            cache_warning = QLabel("<span style='color:#F44;'>Cache-only mode active, restart to disable!</span>")
+            self.verticalLayout.addWidget(cache_warning)
+            # resize to just-enough-to-fit unless it is already big enough
+            self.resize(self.width(), max(self.height(), 698))
+            self.hide(); self.show()
+            self.fetch_week()
 
     def closeEvent(self, event):
         # save the new cache before closing
