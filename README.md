@@ -14,11 +14,11 @@ You need the following Dependencies:
 * py-datetime (python package)  
 
 Install these and run `python3 ./main.py` to see if it works.  
-If you want to have it available in the Menu, run `./install.sh` (linux only).  
+If you want to have it available in the Menu, run `./install.sh` (on linux).  
 After running the install script, you can safely remove this folder.  
 
-The install script registers the `untis` command as an alias to `python3 ./main.py`.  
-You can pass `--system` to the script to install this program system-wide (for all users).  
+The install script registers the `untis` command to open this program.  
+You can pass `--system` to the script to install this program for all users  
 
 You can pass `--uninstall` to uninstall this program.  
 `--uninstall` works even if you only download the script. You still need  
@@ -34,7 +34,7 @@ set PYTHONOPTIMIZE=2
 pyinstaller --onefile --add-data="mainwindow.ui;." --add-data="login.ui;." --add-data="lesson_info.ui;." --add-data="icon.ico;." --windowed --icon="./icon.ico" main.py
 ```
 
-#### Arguments
+#### ArgumentsNone
 Use `--qt5` to force the program to use PyQt5, it will otherwise  
 use PyQt6 if available.  
 Use `--fake-data` to test the program without connecting to WebUntis.  
@@ -42,8 +42,8 @@ Use `--fake-data` to test the program without connecting to WebUntis.
 Use `--delete-settings` to forget the stored login data.  
 If `--credentials <server> <school> <username> <password>` is  
 passed to the program, QSettings will not be used.  
-In combination with `--text-only`, this allows for usage of the program without  
-installing PyQt.  
+In combination with `--text-only`, this allows for usage of the program  
+without installing PyQt.  
 
 #### Terminal-only arguments
 Use `-t` or `--text-only` to not use an UI,  
@@ -54,7 +54,7 @@ The offset can be negative.
 Use `--no-color` to disable color codes.
 
 #### Other notes
-If you changed the `icon.svg` file, regenerate the `.ico` file by running this:  
+If you changed the `icon.svg` file, regenerate the `.ico` file:  
 ```
 magick -background transparent -define 'icon:auto-resize=16,24,32,64' ./icon.svg ./icon.ico
 ```

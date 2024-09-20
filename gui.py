@@ -218,9 +218,7 @@ class MainWindow(QMainWindow):
         self.timetable.setAlternatingRowColors(True)
         self.timetable.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
         self.timetable.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
-        
         self.timetable.setShowGrid(False)
-        
         self.timetable.setRowCount(8)
         self.timetable.setColumnCount(5)
         self.timetable.horizontalHeader().setCascadingSectionResizes(False)
@@ -286,7 +284,10 @@ class MainWindow(QMainWindow):
         friday = dt.date.fromisocalendar(selected_day.year, week_number, 5)
 
         if "--fake-data" not in sys.argv:
-            self.data = api.get_table(self.cached_timetable, self.session, monday, friday)
+            if (self.force_cache):
+                self.data = api.get_cached(self.cached_timetable, monday)
+            else:
+                self.data = api.get_table(self.cached_timetable, self.session, monday, friday)
         else:
             self.data = [[[['mo 1', 'regular lesson', '', 'white', None]], [['tu 1', 'regular lesson', '', 'white', None]]], [[['mo 2', 'single, red', '', 'red', None]], [['tu 2', 'single, orange', '', 'orange', None]]], [[['mo 3', 'half, white', '', 'white', None], ['mo 3', 'second half', '', 'white', None]], [['hello', 'half, red', '', 'red', None], ['world', 'other half', '', 'white', None]]]]
         if self.data != [] and self.data[0] == "err":
@@ -422,6 +423,7 @@ class MainWindow(QMainWindow):
         self.next_btn.pressed.connect(self.next_week)
         self.reload_btn.pressed.connect(self.reload_all)
         self.timetable.setHorizontalHeaderLabels(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
+        self.force_cache = False
         self.show()
         # if the credentials are already all set, log in automatically
         self.data = None
@@ -431,11 +433,20 @@ class MainWindow(QMainWindow):
             if type(self.session) != list: # if login successful
                 self.fetch_week()
             else:
-                QMessageBox.critical(
-                    self,
+                box = QMessageBox (
+                    QMessageBox.Icon.Critical,
                     self.session[0],
-                    self.session[1]
+                    f"<h3>Login Failed!</h3><b>Details:</b><br>{self.session[1]}<h4>Use cached data only?</h4>",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
                 )
+                self.force_cache = (box.exec() == QMessageBox.StandardButton.Yes)
+                if (self.force_cache):
+                    cache_warning = QLabel("<span style='color:#F44;'>Cache-only mode active, restart to disable!</span>")
+                    self.verticalLayout.addWidget(cache_warning)
+                    # resize to just-enough-to-fit unless it is already big enough
+                    self.resize(self.width(), max(self.height(), 698))
+                    self.hide(); self.show()
+                    self.fetch_week()
                 self.session = None
         elif '--fake-data' in sys.argv:
             self.fetch_week()

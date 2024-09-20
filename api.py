@@ -16,6 +16,13 @@ def login(credentials):
     except Exception as e:
         return ["Login Failed!", f"Error: \"{e}\""]
 
+def get_cached(cache, starttime):
+    timetable = None
+    for cache_entry in cache:
+        if cache_entry[0] == starttime:
+            return cache_entry[1]
+    return ["err", "Reading Timetable failed", f"Week not cached, but cache-only mode active!"]
+
 def get_table(cache, session, starttime, endtime):
     # try loading from cache
     timetable = None
