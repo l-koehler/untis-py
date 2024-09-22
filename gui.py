@@ -1,4 +1,4 @@
-import sys, os, api, threading
+import sys, os, api, re
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
 
@@ -32,6 +32,10 @@ def size_policy():
 
 class LoginPopup(QDialog):
     def save(self):
+        # fix some common mistakes with the server address
+        # remove http(s) prefix and (trailing) slashes
+        server_text = re.sub(r'https?://', '', self.server_le.text()).replace('/', '')
+                
         self.settings.setValue('server', self.server_le.text())
         self.settings.setValue('school', self.school_le.text())
         self.settings.setValue('user', self.user_le.text())

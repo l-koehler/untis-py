@@ -38,6 +38,19 @@ pyinstaller --onefile --add-data="icon.ico;." --windowed --icon="./icon.ico" mai
 
 You can move the resulting exe wherever, there is no proper installation.  
 
+### Logging in
+
+The server should be something like `subdomain.webuntis.com` and is the   
+domain + subdomain you use when logging into the website.  
+
+The school is found in the `?school=` URL parameter of the website login page.  
+
+For example:
+The login URL `https://thing.webuntis.com/WebUntis/?school=HS+Example+School#/basic/login`  
+will result in the server `thing.webuntis.com` and the school `HS+Example+School`.  
+
+The username and password are just whatever you use for the website.  
+
 ### Arguments
 * Use `--qt5` to force the program to use PyQt5, it will otherwise  
   use PyQt6 if available.  
