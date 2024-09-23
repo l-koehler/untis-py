@@ -7,16 +7,16 @@ if not "--qt5" in sys.argv:
     use_qt5 = False
     try:
         from PyQt6.QtCore import Qt, QDate, QSettings, pyqtSignal, QMetaObject
-        from PyQt6 import QtCore, QtWidgets, uic
-        from PyQt6.QtGui import QShortcut, QKeySequence, QIcon
-        from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox
+        from PyQt6 import QtCore, QtWidgets
+        from PyQt6.QtGui import QShortcut, QKeySequence, QIcon, QBrush, QColor
+        from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem
     except ImportError:
         use_qt5 = True
 if use_qt5:
     from PyQt5.QtCore import Qt, QDate, QSettings, pyqtSignal, QMetaObject
-    from PyQt5 import QtCore, QtWidgets, uic
-    from PyQt5.QtGui import QIcon
-    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox
+    from PyQt5 import QtCore, QtWidgets
+    from PyQt5.QtGui import QIcon, QBrush, QColor
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem
 
 class QFrame_click(QFrame):
     clicked = pyqtSignal()
@@ -398,6 +398,18 @@ class MainWindow(QMainWindow):
                 
                 self.timetable.setCellWidget(row, col, widget)
                 
+        # highlight the current day, if it is within the week
+        current_date = QDate.currentDate()
+        weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+        for i in range(len(weekdays)):
+            weekday = weekdays[i]
+            if (monday == current_date.addDays((i)*-1)):
+                brush = QBrush(QColor(0x30, 0xA5, 0x3A))
+                self.timetable.horizontalHeaderItem(i).setBackground(brush)
+            else:
+                brush = QBrush(QColor(0x30, 0x35, 0x3A))
+                self.timetable.horizontalHeaderItem(i).setBackground(brush)
+
         self.is_interactive = True
     
     def prev_week(self):
