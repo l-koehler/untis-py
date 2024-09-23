@@ -400,16 +400,15 @@ class MainWindow(QMainWindow):
                 
         # highlight the current day, if it is within the week
         current_date = QDate.currentDate()
+        default_brush = QTableWidgetItem().background()
         weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
         for i in range(len(weekdays)):
             weekday = weekdays[i]
             if (monday == current_date.addDays((i)*-1)):
-                brush = QBrush(QColor(0x30, 0xA5, 0x3A))
+                brush = QBrush(QColor(0x30, 0xA5, 0x30))
                 self.timetable.horizontalHeaderItem(i).setBackground(brush)
             else:
-                brush = QBrush(QColor(0x30, 0x35, 0x3A))
-                self.timetable.horizontalHeaderItem(i).setBackground(brush)
-
+                self.timetable.horizontalHeaderItem(i).setBackground(default_brush)
         self.is_interactive = True
     
     def prev_week(self):
