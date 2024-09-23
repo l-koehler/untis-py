@@ -64,7 +64,7 @@ if type(session) == list:
     print(f"Failed to login: {session[1]}")
     exit(1)
 
-timetable = api.get_table([], session, starttime, endtime)
+timetable = api.get_table([], session, starttime, endtime)[1]
 
 # total mess, but transforms the API response into a nice-looking table
 """
