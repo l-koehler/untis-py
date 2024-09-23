@@ -15,8 +15,8 @@ if not "--qt5" in sys.argv:
 if use_qt5:
     from PyQt5.QtCore import Qt, QDate, QSettings, pyqtSignal, QMetaObject
     from PyQt5 import QtCore, QtWidgets
-    from PyQt5.QtGui import QIcon, QBrush, QColor
-    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem
+    from PyQt5.QtGui import QIcon, QBrush, QColor, QKeySequence
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QShortcut
 
 class QFrame_click(QFrame):
     clicked = pyqtSignal()
@@ -461,9 +461,8 @@ class MainWindow(QMainWindow):
                 self.password = sys.argv[index+4]
 
         self.date_edit.setDate(QDate.currentDate())
-        if not use_qt5:
-            self.shortcut_current_week = QShortcut(QKeySequence('Down'), self)
-            self.shortcut_current_week.activated.connect(self.current_week)
+        self.shortcut_current_week = QShortcut(QKeySequence('Down'), self)
+        self.shortcut_current_week.activated.connect(self.current_week)
         self.timetable.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.date_edit.dateChanged.connect(self.date_changed)
         self.login_btn.pressed.connect(self.login_popup)
