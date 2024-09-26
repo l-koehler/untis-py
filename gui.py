@@ -38,7 +38,7 @@ class ReloadData(QObject):
             QMessageBox.critical(
                 parent,
                 data[1],
-                data[2]
+                "<h3>While trying to update Cache:</h3>" + data[2]
             )
             return
         
