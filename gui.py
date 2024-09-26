@@ -1,4 +1,4 @@
-import sys, os, api, re, concurrent.futures
+import sys, os, api, re
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
 
@@ -33,7 +33,17 @@ class ReloadData(QObject):
     redraw_requested = pyqtSignal()
 
     def run(self, parent, monday, friday):
-        parent.data = api.get_table([], parent.session, monday, friday, True)[1]
+        data = api.get_table([], parent.session, monday, friday, True)
+        if data != [] and data[0] == "err":
+            QMessageBox.critical(
+                parent,
+                data[1],
+                data[2]
+            )
+            return
+        
+        parent.week_is_cached = data[0]
+        parent.data = data[1]
         self.redraw_requested.emit()
 
 
@@ -413,6 +423,7 @@ class MainWindow(QMainWindow):
             self.data = self.data[1]
         else:
             self.data = [[[['mo 1', 'regular lesson', '', 'white', None]], [['tu 1', 'regular lesson', '', 'white', None]]], [[['mo 2', 'single, red', '', 'red', None]], [['tu 2', 'single, orange', '', 'orange', None]]], [[['mo 3', 'half, white', '', 'white', None], ['mo 3', 'second half', '', 'white', None]], [['hello', 'half, red', '', 'red', None], ['world', 'other half', '', 'white', None]]]]
+            self.week_is_cached = False
         if self.data != [] and self.data[0] == "err":
             QMessageBox.critical(
                 self,
@@ -429,7 +440,6 @@ class MainWindow(QMainWindow):
         # if our results were from cache, asynchronously refresh that
         if (self.week_is_cached and self.force_cache == False):
             self.refresh_week(monday, friday)
-            self.week_is_cached = False
     
     def refresh_week(self, monday, friday):
         self.thread = QThread()
@@ -464,8 +474,6 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        
-        self.executor = concurrent.futures.ThreadPoolExecutor()
 
         self.settings = QSettings('l-koehler', 'untis-py')
         self.is_interactive = False
