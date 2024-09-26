@@ -1,4 +1,4 @@
-import sys, os, api, re
+import sys, os, api, re, concurrent.futures
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
 
@@ -6,14 +6,14 @@ use_qt5 = True
 if not "--qt5" in sys.argv:
     use_qt5 = False
     try:
-        from PyQt6.QtCore import Qt, QDate, QSettings, pyqtSignal, QMetaObject
+        from PyQt6.QtCore import Qt, QDate, QSettings, pyqtSignal, QThread, QObject
         from PyQt6 import QtCore, QtWidgets
         from PyQt6.QtGui import QShortcut, QKeySequence, QIcon, QBrush, QColor
         from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem
     except ImportError:
         use_qt5 = True
 if use_qt5:
-    from PyQt5.QtCore import Qt, QDate, QSettings, pyqtSignal, QMetaObject
+    from PyQt5.QtCore import Qt, QDate, QSettings, pyqtSignal, QThread, QObject
     from PyQt5 import QtCore, QtWidgets
     from PyQt5.QtGui import QIcon, QBrush, QColor, QKeySequence
     from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QShortcut
@@ -28,6 +28,13 @@ def size_policy():
         return QtWidgets.QSizePolicy
     else:
         return QtWidgets.QSizePolicy.Policy
+
+class ReloadData(QObject):
+    redraw_requested = pyqtSignal()
+
+    def run(self, parent, monday, friday):
+        parent.data = api.get_table([], parent.session, monday, friday, True)[1]
+        self.redraw_requested.emit()
 
 
 class LoginPopup(QDialog):
@@ -306,36 +313,15 @@ class MainWindow(QMainWindow):
         if self.is_interactive:
             popup = InfoPopup(self)
             popup.exec()
-
-    def fetch_week(self, replace_cache=False):
+    
+    def draw_week(self):
         selected_day = self.date_edit.date().toPyDate()
         week_number = selected_day.isocalendar()[1]
         monday = dt.date.fromisocalendar(selected_day.year, week_number, 1)
-        friday = dt.date.fromisocalendar(selected_day.year, week_number, 5)
-
-        if "--fake-data" not in sys.argv:
-            if (self.force_cache):
-                self.data = api.get_cached(self.cached_timetable, monday)
-            else:
-                self.data = api.get_table(self.cached_timetable, self.session, monday, friday, replace_cache)
-            self.week_is_cached = self.data[0]
-            self.data = self.data[1]
-        else:
-            self.data = [[[['mo 1', 'regular lesson', '', 'white', None]], [['tu 1', 'regular lesson', '', 'white', None]]], [[['mo 2', 'single, red', '', 'red', None]], [['tu 2', 'single, orange', '', 'orange', None]]], [[['mo 3', 'half, white', '', 'white', None], ['mo 3', 'second half', '', 'white', None]], [['hello', 'half, red', '', 'red', None], ['world', 'other half', '', 'white', None]]]]
-        if self.data != [] and self.data[0] == "err":
-            QMessageBox.critical(
-                self,
-                self.data[1],
-                self.data[2]
-            )
-            return
-
-        self.timetable.setRowCount(len(self.data))
-        
-        if replace_cache:
-            return;
         
         self.is_interactive = False
+
+        self.timetable.setRowCount(len(self.data))
 
         for row in range(len(self.data)):
             for col in range(len(self.data[row])):
@@ -410,6 +396,54 @@ class MainWindow(QMainWindow):
             else:
                 self.timetable.horizontalHeaderItem(i).setBackground(default_brush)
         self.is_interactive = True
+
+
+    def fetch_week(self, replace_cache=False):
+        selected_day = self.date_edit.date().toPyDate()
+        week_number = selected_day.isocalendar()[1]
+        monday = dt.date.fromisocalendar(selected_day.year, week_number, 1)
+        friday = dt.date.fromisocalendar(selected_day.year, week_number, 5)
+
+        if "--fake-data" not in sys.argv:
+            if (self.force_cache):
+                self.data = api.get_cached(self.cached_timetable, monday)
+            else:
+                self.data = api.get_table(self.cached_timetable, self.session, monday, friday, replace_cache)
+            self.week_is_cached = self.data[0]
+            self.data = self.data[1]
+        else:
+            self.data = [[[['mo 1', 'regular lesson', '', 'white', None]], [['tu 1', 'regular lesson', '', 'white', None]]], [[['mo 2', 'single, red', '', 'red', None]], [['tu 2', 'single, orange', '', 'orange', None]]], [[['mo 3', 'half, white', '', 'white', None], ['mo 3', 'second half', '', 'white', None]], [['hello', 'half, red', '', 'red', None], ['world', 'other half', '', 'white', None]]]]
+        if self.data != [] and self.data[0] == "err":
+            QMessageBox.critical(
+                self,
+                self.data[1],
+                self.data[2]
+            )
+            return
+        
+        if replace_cache:
+            return
+        
+        self.draw_week()
+        
+        # if our results were from cache, asynchronously refresh that
+        if (self.week_is_cached and self.force_cache == False):
+            self.refresh_week(monday, friday)
+            self.week_is_cached = False
+    
+    def refresh_week(self, monday, friday):
+        self.thread = QThread()
+        self.worker = ReloadData()
+        self.worker.moveToThread(self.thread)
+        
+        self.worker.redraw_requested.connect(self.thread.quit)
+        self.worker.redraw_requested.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        self.worker.redraw_requested.connect(self.draw_week)
+        
+        self.thread.start()
+        self.worker.run(self, monday, friday)
+        
     
     def prev_week(self):
         self.date_edit.setDate(self.date_edit.date().addDays(-7))
@@ -430,10 +464,13 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
+        
+        self.executor = concurrent.futures.ThreadPoolExecutor()
+
         self.settings = QSettings('l-koehler', 'untis-py')
         self.is_interactive = False
         self.load_settings('--credentials' in sys.argv) # don't overwrite credentials true/false
-
+        
         if "--delete-settings" in sys.argv:
             self.delete_settings()
         if getattr(sys, 'frozen', False):
@@ -448,7 +485,6 @@ class MainWindow(QMainWindow):
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('l-koehler.untis-py')
         # set application icon
         self.setWindowIcon(QIcon(ico_path))
-
         for index in range(len(sys.argv)):
             if sys.argv[index] == '--credentials':
                 if len(sys.argv) < index+5:
@@ -459,7 +495,6 @@ class MainWindow(QMainWindow):
                 self.school   = sys.argv[index+2]
                 self.user     = sys.argv[index+3]
                 self.password = sys.argv[index+4]
-
         self.date_edit.setDate(QDate.currentDate())
         self.shortcut_current_week = QShortcut(QKeySequence('Down'), self)
         self.shortcut_current_week.activated.connect(self.current_week)
