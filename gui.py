@@ -1,4 +1,4 @@
-import sys, os, api, re, threading, time
+import sys, os, api, re, threading
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
 
@@ -401,19 +401,20 @@ class MainWindow(QMainWindow):
                 self.data = api.get_cached(self.cached_timetable, monday)
             else:
                 self.data = api.get_table(self.cached_timetable, self.session, monday, friday, replace_cache)
+            if self.data != [] and self.data[0] == "err":
+                if not silent:
+                    QMessageBox.critical(
+                        self,
+                        self.data[1],
+                        self.data[2]
+                    )
+                return
             self.week_is_cached = self.data[0]
             self.data = self.data[1]
         else:
             self.data = [[[['mo 1', 'regular lesson', '', 'white', None]], [['tu 1', 'regular lesson', '', 'white', None]]], [[['mo 2', 'single, red', '', 'red', None]], [['tu 2', 'single, orange', '', 'orange', None]]], [[['mo 3', 'half, white', '', 'white', None], ['mo 3', 'second half', '', 'white', None]], [['hello', 'half, red', '', 'red', None], ['world', 'other half', '', 'white', None]]]]
             self.week_is_cached = False
-        if self.data != [] and self.data[0] == "err":
-            if not silent:
-                QMessageBox.critical(
-                    self,
-                    self.data[1],
-                    self.data[2]
-                )
-            return
+
         
         if replace_cache:
             return
