@@ -420,7 +420,16 @@ class MainWindow(QMainWindow):
         self.draw_week()
         
         def cache_refresh(parent, monday, friday):
-            parent.data = api.get_table([], parent.session, monday, friday, True)[1]
+            data = api.get_table([], parent.session, monday, friday, True)
+            if (data[0] == "err"):
+                QMessageBox.critical(
+                    parent,
+                    data[1],
+                    data[2]
+                )
+                return
+            else:
+                parent.data = data[1]
             parent.redraw_trip = True
         
         # if our results were from cache, asynchronously refresh that
