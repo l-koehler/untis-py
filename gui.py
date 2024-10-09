@@ -1,4 +1,4 @@
-import sys, os, api, re
+import sys, os, api, re, threading
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
 
@@ -6,14 +6,14 @@ use_qt5 = True
 if not "--qt5" in sys.argv:
     use_qt5 = False
     try:
-        from PyQt6.QtCore import Qt, QDate, QSettings, pyqtSignal, QThread, QObject
+        from PyQt6.QtCore import Qt, QDate, QSettings, pyqtSignal, QThread, QObject, QTimer
         from PyQt6 import QtCore, QtWidgets
         from PyQt6.QtGui import QShortcut, QKeySequence, QIcon, QBrush, QColor
         from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem
     except ImportError:
         use_qt5 = True
 if use_qt5:
-    from PyQt5.QtCore import Qt, QDate, QSettings, pyqtSignal, QThread, QObject
+    from PyQt5.QtCore import Qt, QDate, QSettings, pyqtSignal, QThread, QObject, QTimer
     from PyQt5 import QtCore, QtWidgets
     from PyQt5.QtGui import QIcon, QBrush, QColor, QKeySequence
     from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QShortcut
@@ -28,24 +28,6 @@ def size_policy():
         return QtWidgets.QSizePolicy
     else:
         return QtWidgets.QSizePolicy.Policy
-
-class ReloadData(QObject):
-    redraw_requested = pyqtSignal()
-
-    def run(self, parent, monday, friday):
-        data = api.get_table([], parent.session, monday, friday, True)
-        if data != [] and data[0] == "err":
-            QMessageBox.critical(
-                parent,
-                data[1],
-                "<h3>While trying to update Cache:</h3>" + data[2]
-            )
-            return
-        
-        parent.week_is_cached = data[0]
-        parent.data = data[1]
-        self.redraw_requested.emit()
-
 
 class LoginPopup(QDialog):
     def save(self):
@@ -437,23 +419,15 @@ class MainWindow(QMainWindow):
         
         self.draw_week()
         
+        def cache_refresh(parent, monday, friday):
+            parent.data = api.get_table([], parent.session, monday, friday, True)[1]
+            parent.redraw_trip = True
+        
         # if our results were from cache, asynchronously refresh that
         if (self.week_is_cached and self.force_cache == False):
-            self.refresh_week(monday, friday)
-    
-    def refresh_week(self, monday, friday):
-        self.thread = QThread()
-        self.worker = ReloadData()
-        self.worker.moveToThread(self.thread)
-        
-        self.worker.redraw_requested.connect(self.thread.quit)
-        self.worker.redraw_requested.connect(self.worker.deleteLater)
-        self.thread.finished.connect(self.thread.deleteLater)
-        self.worker.redraw_requested.connect(self.draw_week)
-        
-        self.thread.start()
-        self.worker.run(self, monday, friday)
-        
+            # async start a thread with api.get_table
+            api_thread = threading.Thread(target=cache_refresh, args = (self, monday, friday,))
+            api_thread.start()
     
     def prev_week(self):
         self.date_edit.setDate(self.date_edit.date().addDays(-7))
@@ -472,11 +446,20 @@ class MainWindow(QMainWindow):
         self.fetch_week()
         self.is_interactive = True
 
+    def test_trip_redraw(self):
+        if self.redraw_trip != False:
+            self.redraw_trip = False
+            self.draw_week()
+
     def __init__(self):
         super().__init__()
 
         self.settings = QSettings('l-koehler', 'untis-py')
         self.is_interactive = False
+        self.redraw_trip = False # tripped by thread whenever the data was asynchronously refreshed
+        self.redraw_timer = QTimer()
+        self.redraw_timer.timeout.connect(self.test_trip_redraw)
+        self.redraw_timer.start(500) # twice a second
         self.load_settings('--credentials' in sys.argv) # don't overwrite credentials true/false
         
         if "--delete-settings" in sys.argv:

@@ -26,7 +26,7 @@ def get_cached(cache, starttime):
 def get_table(cache, session, starttime, endtime, no_cache=False):
     # try loading from cache
     timetable = None
-    if not no_cache:
+    if no_cache == False:
         for cache_entry in cache:
             if cache_entry[0] == starttime:
                 return [True, cache_entry[1]]
