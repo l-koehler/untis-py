@@ -1,4 +1,4 @@
-import sys, os, api, re, threading
+import sys, os, api, re, threading, time
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
 
@@ -390,7 +390,7 @@ class MainWindow(QMainWindow):
         self.is_interactive = True
 
 
-    def fetch_week(self, replace_cache=False):
+    def fetch_week(self, replace_cache=False, silent=False):
         selected_day = self.date_edit.date().toPyDate()
         week_number = selected_day.isocalendar()[1]
         monday = dt.date.fromisocalendar(selected_day.year, week_number, 1)
@@ -407,17 +407,21 @@ class MainWindow(QMainWindow):
             self.data = [[[['mo 1', 'regular lesson', '', 'white', None]], [['tu 1', 'regular lesson', '', 'white', None]]], [[['mo 2', 'single, red', '', 'red', None]], [['tu 2', 'single, orange', '', 'orange', None]]], [[['mo 3', 'half, white', '', 'white', None], ['mo 3', 'second half', '', 'white', None]], [['hello', 'half, red', '', 'red', None], ['world', 'other half', '', 'white', None]]]]
             self.week_is_cached = False
         if self.data != [] and self.data[0] == "err":
-            QMessageBox.critical(
-                self,
-                self.data[1],
-                self.data[2]
-            )
+            if not silent:
+                QMessageBox.critical(
+                    self,
+                    self.data[1],
+                    self.data[2]
+                )
             return
         
         if replace_cache:
             return
-        
+
         self.draw_week()
+        if not silent and not self.force_cache:
+            self.verticalLayout.removeWidget(self.cache_warning[1])
+            self.resize(self.width(), self.cache_warning[0])
         
         def cache_refresh(parent, monday, friday):
             data = api.get_table([], parent.session, monday, friday, True)
@@ -459,6 +463,51 @@ class MainWindow(QMainWindow):
         if self.redraw_trip != False:
             self.redraw_trip = False
             self.draw_week()
+    
+    def login_thread(self):
+        if not self.session_trip:
+            return
+
+        credentials = [self.server, self.school, self.user, self.password]
+        if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
+            if type(self.session) != list: # if login successful (already tried pre-trip)
+                self.fetch_week()
+            else:
+                box = QMessageBox (
+                    QMessageBox.Icon.Critical,
+                    self.session[0],
+                    f"<h3>Login Failed!</h3><b>Details:</b><br>{self.session[1]}<h4>Use cached data only?</h4>",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                )
+                self.force_cache = (box.exec() == QMessageBox.StandardButton.Yes)
+                self.session = None
+        elif '--fake-data' in sys.argv:
+            self.fetch_week()
+        elif '--force-cache' in sys.argv:
+            self.force_cache = True
+            self.session = None
+        else:
+            self.session = None
+        
+        if self.force_cache:
+            if (self.cache_warning):
+                self.verticalLayout.removeWidget(self.cache_warning[1])
+                self.cache_warning = None
+            cache_warning = QLabel("<span style='color:#F44;'>Cache-only mode active, restart to disable!</span>")
+            self.verticalLayout.addWidget(cache_warning)
+            # resize to just-enough-to-fit unless it is already big enough
+            self.resize(self.width(), max(self.height(), 698))
+            self.fetch_week()
+        
+        # stop trying this, its useless
+        self.session_timer.stop()
+
+    def login_thread_defer(parent):
+        credentials = [parent.server, parent.school, parent.user, parent.password]
+        if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
+            parent.session = api.login(credentials)
+        # trip in any case, to ensure the fairly frequent login timer doesn't run forever
+        parent.session_trip = True
 
     def __init__(self):
         super().__init__()
@@ -469,6 +518,11 @@ class MainWindow(QMainWindow):
         self.redraw_timer = QTimer()
         self.redraw_timer.timeout.connect(self.test_trip_redraw)
         self.redraw_timer.start(500) # twice a second
+        self.session_trip = False # tripped by thread whenever the data was asynchronously refreshed
+        self.session_timer = QTimer()
+        self.session_timer.timeout.connect(self.login_thread)
+        self.session_timer.start(100) # ten times a second, but deleted after use
+        
         self.load_settings('--credentials' in sys.argv) # don't overwrite credentials true/false
         
         if "--delete-settings" in sys.argv:
@@ -507,39 +561,24 @@ class MainWindow(QMainWindow):
         self.reload_btn.pressed.connect(self.reload_all)
         self.timetable.setHorizontalHeaderLabels(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
         self.force_cache = False
+        self.cache_warning = None
+        self.data = None
         self.week_is_cached = False
         self.show()
-        # if the credentials are already all set, log in automatically
-        self.data = None
-        credentials = [self.server, self.school, self.user, self.password]
-        if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
-            self.session = api.login(credentials)
-            if type(self.session) != list: # if login successful
-                self.fetch_week()
-            else:
-                box = QMessageBox (
-                    QMessageBox.Icon.Critical,
-                    self.session[0],
-                    f"<h3>Login Failed!</h3><b>Details:</b><br>{self.session[1]}<h4>Use cached data only?</h4>",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-                )
-                self.force_cache = (box.exec() == QMessageBox.StandardButton.Yes)
-                self.session = None
-        elif '--fake-data' in sys.argv:
-            self.fetch_week()
-        elif '--force-cache' in sys.argv:
-            self.force_cache = True
-            self.session = None
-        else:
-            self.session = None
         
-        if self.force_cache:
-            cache_warning = QLabel("<span style='color:#F44;'>Cache-only mode active, restart to disable!</span>")
-            self.verticalLayout.addWidget(cache_warning)
+        # try loading cached data (unless that'll happen anyways)
+        if not '--force-cache' in sys.argv:
+            self.cache_warning = (self.height(), QLabel("Not yet logged in, data might be outdated!"))
+            self.verticalLayout.addWidget(self.cache_warning[1])
             # resize to just-enough-to-fit unless it is already big enough
             self.resize(self.width(), max(self.height(), 698))
-            self.hide(); self.show()
-            self.fetch_week()
+            self.force_cache = True
+            self.fetch_week(silent=True)
+            self.force_cache = False
+        
+        # if the credentials are already all set, log in asynchronously
+        session_thread = threading.Thread(target=self.login_thread_defer)
+        session_thread.start()
 
     def closeEvent(self, event):
         # save the new cache before closing
