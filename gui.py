@@ -6,14 +6,14 @@ use_qt5 = True
 if not "--qt5" in sys.argv:
     use_qt5 = False
     try:
-        from PyQt6.QtCore import Qt, QDate, QSettings, pyqtSignal, QThread, QObject, QTimer
+        from PyQt6.QtCore import Qt, QDate, QSettings, pyqtSignal, QTimer
         from PyQt6 import QtCore, QtWidgets
         from PyQt6.QtGui import QShortcut, QKeySequence, QIcon, QBrush, QColor
         from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem
     except ImportError:
         use_qt5 = True
 if use_qt5:
-    from PyQt5.QtCore import Qt, QDate, QSettings, pyqtSignal, QThread, QObject, QTimer
+    from PyQt5.QtCore import Qt, QDate, QSettings, pyqtSignal, QTimer
     from PyQt5 import QtCore, QtWidgets
     from PyQt5.QtGui import QIcon, QBrush, QColor, QKeySequence
     from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QShortcut
