@@ -95,9 +95,14 @@ class InfoPopup(QDialog):
         self.close_btn.setGeometry(QtCore.QRect(10, 250, 231, 25))
         self.close_btn.setText("Close")
         self.close_btn.pressed.connect(self.close)
-        if (parent.session == None or parent.force_cache):
+        if (parent.force_cache):
             self.warning = QLabel(self)
             self.warning.setText("<h2>Unavailable!</h2><p>Lesson Details are not available<br>in cache-only mode.</p><p>To disable cache-only mode,<br>restart the program.</p>")
+            self.warning.setWordWrap(True)
+            return
+        elif (parent.session in [None, []]):
+            self.warning = QLabel(self)
+            self.warning.setText("<h2>Unavailable!</h2><p>Lesson Details are not available<br>while not logged in.</p><p>You should get logged in automatically,<br>maybe check your internet connection.</p>")
             self.warning.setWordWrap(True)
             return
         if (parent.week_is_cached):
@@ -519,7 +524,7 @@ class MainWindow(QMainWindow):
         self.redraw_timer = QTimer()
         self.redraw_timer.timeout.connect(self.test_trip_redraw)
         self.redraw_timer.start(500) # twice a second
-        self.session_trip = False # tripped by thread whenever the data was asynchronously refreshed
+        self.session_trip = False
         self.session_timer = QTimer()
         self.session_timer.timeout.connect(self.login_thread)
         self.session_timer.start(100) # ten times a second, but deleted after use
@@ -564,10 +569,11 @@ class MainWindow(QMainWindow):
         self.force_cache = False
         self.cache_warning = None
         self.data = None
+        self.session = None
         self.week_is_cached = False
         self.show()
         
-        # try loading cached data (unless that'll happen anyways)
+        # try loading cached data to display at-least-something during login/fetch (unless that'll happen anyways)
         if not '--force-cache' in sys.argv:
             self.cache_warning = (self.height(), QLabel("Not yet logged in, data might be outdated!"))
             self.verticalLayout.addWidget(self.cache_warning[1])
