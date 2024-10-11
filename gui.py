@@ -94,14 +94,16 @@ class InfoPopup(QDialog):
         self.close_btn = QPushButton()
         self.close_btn.setText("Close")
         self.close_btn.pressed.connect(self.close)
-        self.warning = QLabel()
-        self.vlayout.addWidget(self.warning)
         self.stale_data = False
         if (parent.force_cache):
+            self.warning = QLabel()
+            self.vlayout.addWidget(self.warning)
             self.warning.setText("<h2>Cache-only!</h2><p>Some Details are not available<br>in cache-only mode.</p><p>To disable cache-only mode, restart the program.</p>")
             self.warning.setWordWrap(True)
             self.stale_data = True
         elif (parent.session in [None, []]):
+            self.warning = QLabel()
+            self.vlayout.addWidget(self.warning)
             self.warning.setText("<h2>Cache-only!</h2><p>Some Details are not available<br>while not logged in.</p><p>You should get logged in<br>automatically if your internet works.</p>")
             self.warning.setWordWrap(True)
             self.stale_data = True
