@@ -16,6 +16,8 @@ if [[ "$*" == *"--system"* || "$*" == *"-s"* ]]; then
     E_DIR="/opt/untis-py"
     D_PATH="/usr/share/applications"
     B_DIR="/usr/bin"
+    PNG_DIR="/usr/share/pixmaps"
+    SVG_DIR="/usr/share/pixmaps"
     U_MSG="Check if this installation is local (inside \$HOME)"
 else
     if [ $(id -u) -eq 0 ]; then
@@ -26,6 +28,8 @@ else
     E_DIR="$HOME/.local/share/untis-py" # not exactly standardized, there does not appear to be a proper place for multi-file programs in $HOME
     D_PATH="$HOME/.local/share/applications"
     B_DIR="$HOME/.local/bin"
+    PNG_DIR="$HOME/.local/share/icons/hicolor/48x48/apps"
+    SVG_DIR="$HOME/.local/share/icons/hicolor/scalable/apps"
     U_MSG="Check if this installation is system-wide."
 fi
 
@@ -61,6 +65,13 @@ if [[ "$*" == *"--uninstall"* || "$*" == *"-u"* ]]; then
             exit 1
         fi
     fi
+    # these files weren't present in older versions, we can ignore errors here
+    rm "$PNG_DIR/untispy.png" 2>/dev/null
+    rm "$SVG_DIR/untispy.svg" 2>/dev/null
+    if [ -f "$PNG_DIR/untispy.png" ] || [ -f "$SVG_DIR/untispy.svg" ]; then
+        echo "Found untis icons, but failed to remove them. Check permissions (use sudo?)"
+        exit 1
+    fi
     echo "Success, untis-py uninstalled!"
     exit 0
 fi
@@ -72,7 +83,7 @@ Name=Untis
 Comment=Untis Client for Linux
 Path=$E_DIR
 Exec=python3 ./main.py
-Icon=$E_DIR/icon.ico
+Icon=untispy
 Terminal=false
 Categories=Education" > "$D_PATH/untis.desktop"
 if [ ! -f "$D_PATH/untis.desktop" ]; then
@@ -88,6 +99,16 @@ if [ ! -f "$E_DIR/main.py" ]; then
         echo "Failed to undo previous change of creating $D_PATH/untis.desktop, installation incomplete."
         echo "Rerunning the installation with sufficient permissions or manually removing $D_PATH/untis.desktop will fix this."
     fi
+    echo "Ensure install.sh is started with sufficient permissions (maybe use 'sudo ./install.sh')"
+    exit 1
+fi
+
+mkdir -p $PNG_DIR
+mkdir -p $SVG_DIR
+cp ./icon.png "$PNG_DIR/untispy.png"
+cp ./icon.svg "$SVG_DIR/untispy.svg"
+if [ ! -f "$PNG_DIR/untispy.png" ] || [ ! -f "$SVG_DIR/untispy.svg" ]; then
+    echo "Failed to install icons!"
     echo "Ensure install.sh is started with sufficient permissions (maybe use 'sudo ./install.sh')"
     exit 1
 fi

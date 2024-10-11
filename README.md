@@ -75,7 +75,8 @@ The username and password are just whatever you use for the website.
 * Use `--no-color` to disable color codes.  
 
 ### Other notes
-If you changed the `icon.svg` file, regenerate the `.ico` file:  
+If you changed the `icon.svg` file, regenerate the `.ico`/`.png` files:  
 ```
 magick -background transparent -define 'icon:auto-resize=16,24,32,64' ./icon.svg ./icon.ico
+magick ./icon.svg -transparent white ./icon.png && magick -resize 48x48 ./icon.png ./icon.png
 ```
