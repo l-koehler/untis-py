@@ -9,14 +9,14 @@ if not "--qt5" in sys.argv:
         from PyQt6.QtCore import Qt, QDate, QSettings, pyqtSignal, QTimer
         from PyQt6 import QtCore
         from PyQt6.QtGui import QShortcut, QKeySequence, QIcon, QBrush, QColor
-        from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QSizePolicy, QSpacerItem, QToolButton, QDateEdit, QTableWidget, QStatusBar, QDialogButtonBox
+        from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QSizePolicy, QSpacerItem, QToolButton, QDateEdit, QTableWidget, QStatusBar, QDialogButtonBox, QTabWidget
     except ImportError:
         use_qt5 = True
 if use_qt5:
     from PyQt5.QtCore import Qt, QDate, QSettings, pyqtSignal, QTimer
     from PyQt5 import QtCore
     from PyQt5.QtGui import QIcon, QBrush, QColor, QKeySequence
-    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QShortcut, QSizePolicy, QSpacerItem, QToolButton, QDateEdit, QTableWidget, QStatusBar, QDialogButtonBox
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QShortcut, QSizePolicy, QSpacerItem, QToolButton, QDateEdit, QTableWidget, QStatusBar, QDialogButtonBox, QTabWidget
 
 class QFrame_click(QFrame):
     clicked = pyqtSignal()
@@ -90,26 +90,25 @@ class InfoPopup(QDialog):
     def __init__(self, parent):        
         QWidget.__init__(self)
         self.setWindowTitle("Lesson Info")
-        self.resize(249, 283)
-        self.close_btn = QPushButton(self)
-        self.close_btn.setGeometry(QtCore.QRect(10, 250, 231, 25))
+        self.vlayout = QVBoxLayout(self)
+        self.close_btn = QPushButton()
         self.close_btn.setText("Close")
         self.close_btn.pressed.connect(self.close)
+        self.warning = QLabel()
+        self.vlayout.addWidget(self.warning)
+        self.stale_data = False
         if (parent.force_cache):
-            self.warning = QLabel(self)
-            self.warning.setText("<h2>Unavailable!</h2><p>Lesson Details are not available<br>in cache-only mode.</p><p>To disable cache-only mode,<br>restart the program.</p>")
+            self.warning.setText("<h2>Cache-only!</h2><p>Some Details are not available<br>in cache-only mode.</p><p>To disable cache-only mode, restart the program.</p>")
             self.warning.setWordWrap(True)
-            return
+            self.stale_data = True
         elif (parent.session in [None, []]):
-            self.warning = QLabel(self)
-            self.warning.setText("<h2>Unavailable!</h2><p>Lesson Details are not available<br>while not logged in.</p><p>You should get logged in automatically,<br>maybe check your internet connection.</p>")
+            self.warning.setText("<h2>Cache-only!</h2><p>Some Details are not available<br>while not logged in.</p><p>You should get logged in<br>automatically if your internet works.</p>")
             self.warning.setWordWrap(True)
-            return
-        if (parent.week_is_cached):
+            self.stale_data = True
+        if (parent.week_is_cached and not self.stale_data):
             parent.fetch_week(True)
-            
-        self.lesson_tab = QtWidgets.QTabWidget(self)
-        self.lesson_tab.setGeometry(QtCore.QRect(10, 10, 231, 231))
+        self.lesson_tab = QTabWidget()
+        self.vlayout.addWidget(self.lesson_tab)
         self.lesson_tab.setCurrentIndex(1)
         
         col = parent.timetable.currentColumn()
@@ -122,7 +121,6 @@ class InfoPopup(QDialog):
         except:
             hour_data = [None]
             
-        
         for i in range(len(hour_data)):
             if hour_data == [None]:
                 self.content = QLabel(self)
@@ -131,53 +129,68 @@ class InfoPopup(QDialog):
                 continue
                 
             lesson = hour_data[i]
-            full_repl = lesson[-1]
+            if not self.stale_data:
+                full_repl = lesson[-1]
 
-            try:
-                room_str = f"{full_repl.rooms[0].name}"
-                if full_repl.original_rooms != full_repl.rooms and full_repl.original_rooms != []:
-                    room_str += f" (originally in {full_repl.original_rooms[0].name})"
-            except IndexError:
-                room_str = "Unknown"
+                try:
+                    room_str = f"{full_repl.rooms[0].name}"
+                    if full_repl.original_rooms != full_repl.rooms and full_repl.original_rooms != []:
+                        room_str += f" (originally in {full_repl.original_rooms[0].name})"
+                except IndexError:
+                    room_str = "Unknown"
 
-            if full_repl.activityType != "Unterricht": # why is it localized qwq
-                status_str = full_repl.activityType
-            elif full_repl.code == "cancelled":
-                status_str = "Cancelled"
-            elif full_repl.code == "irregular":
-                status_str = "Substitution"
-            elif full_repl.type == "ls":
-                status_str = "Regular"
-            elif full_repl.type == "oh":
-                status_str = "Office Hour"
-            elif full_repl.type == "sb":
-                status_str = "Standby"
-            elif full_repl.type == "bs":
-                status_str = "Break Supervision"
-            elif full_repl.type == "ex":
-                status_str = "Examination"
+                if full_repl.activityType != "Unterricht": # why is it localized qwq
+                    status_str = full_repl.activityType
+                elif full_repl.code == "cancelled":
+                    status_str = "Cancelled"
+                elif full_repl.code == "irregular":
+                    status_str = "Substitution"
+                elif full_repl.type == "ls":
+                    status_str = "Regular"
+                elif full_repl.type == "oh":
+                    status_str = "Office Hour"
+                elif full_repl.type == "sb":
+                    status_str = "Standby"
+                elif full_repl.type == "bs":
+                    status_str = "Break Supervision"
+                elif full_repl.type == "ex":
+                    status_str = "Examination"
+                else:
+                    status_str = "unknown/report error"
+
+                if len(full_repl.klassen) == 1:
+                    klassen_str = full_repl.klassen[0]
+                else:
+                    klassen_str = '; '.join([i.name for i in full_repl.klassen])
+
+                long_name = full_repl.subjects[0].long_name
+                starttime = full_repl.start.time().strftime('%H:%M')
+                endtime = full_repl.end.time().strftime('%H:%M')
             else:
-                status_str = "unknown/report error"
-
-            if len(full_repl.klassen) == 1:
-                klassen_str = full_repl.klassen[0]
-            else:
-                klassen_str = '; '.join([i.name for i in full_repl.klassen])
-
-            long_name = full_repl.subjects[0].long_name
-            rt_info = f"<h4>{long_name}</h4>\
-            <br>Start: {full_repl.start.time().strftime('%H:%M')}\
-            <br>End: {full_repl.end.time().strftime('%H:%M')}\
-            <br>Type: {status_str}\
-            <br>Room: {room_str}\
-            <br>Classes: {klassen_str}"
-            if full_repl.info != "":
-                rt_info += f"<br>Info: {full_repl.info}"
-
+                long_name = lesson[0]
+                starttime = ""
+                endtime = ""
+                status_str = ""
+                room_str = lesson[1]
+                klassen_str = ""
+            rt_info = f"<h4>{long_name}</h4>"
+            if starttime:
+                rt_info += f"<br>Start: {starttime}"
+            if endtime:
+                rt_info += f"<br>End: {endtime}"
+            if status_str:
+                rt_info += f"<br>Type: {status_str}"
+            rt_info += f"<br>Room: {room_str}"
+            if klassen_str:
+                rt_info += f"<br>Classes: {klassen_str}"
+            if lesson[2]:
+                rt_info += f"<br>Info: {lesson[2]}"
             title = f"{i+1}: {lesson[0]}"
             info_lbl = QLabel(f"{rt_info}")
             info_lbl.setWordWrap(True)
             self.lesson_tab.addTab(info_lbl, title)
+        self.vlayout.addWidget(self.close_btn)
+        self.size
         self.close_btn.pressed.connect(self.close)
 
 class MainWindow(QMainWindow):
@@ -395,7 +408,6 @@ class MainWindow(QMainWindow):
             self.timetable.horizontalHeaderItem(i).setText(ref_tm.toString("dddd (d.M)"))
         self.is_interactive = True
 
-
     def fetch_week(self, replace_cache=False, silent=False):
         selected_day = self.date_edit.date().toPyDate()
         week_number = selected_day.isocalendar()[1]
@@ -403,7 +415,7 @@ class MainWindow(QMainWindow):
         friday = dt.date.fromisocalendar(selected_day.year, week_number, 5)
 
         if "--fake-data" not in sys.argv:
-            if (self.force_cache):
+            if self.force_cache:
                 self.data = api.get_cached(self.cached_timetable, monday)
             else:
                 self.data = api.get_table(self.cached_timetable, self.session, monday, friday, replace_cache)
@@ -594,11 +606,8 @@ class MainWindow(QMainWindow):
             self.settings.setValue('cached_timetable', self.cached_timetable)
         event.accept()
         # cause a AssertionError to kill the login thread
-        try:
-            if self.session_thread.is_alive():
-                # causes a RuntimeError in login_thread_defer by starting the already-started thread.
-                # this is fully intentional, as we no longer need to login as we are already closing
-                # and if a login thread returns neither result nor timeout it could get stuck for ages, leaving the program unable to close
-                self.session_thread.start()
-        except AttributeError: # except threading removed _stop
-            pass
+        if self.session_thread.is_alive():
+            # causes a RuntimeError in login_thread_defer by starting the already-started thread.
+            # this is fully intentional, as we no longer need to login as we are already closing
+            # and if a login thread returns neither result nor timeout it could get stuck for ages, leaving the program unable to close
+            self.session_thread.start()
