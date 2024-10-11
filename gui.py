@@ -584,11 +584,20 @@ class MainWindow(QMainWindow):
             self.force_cache = False
         
         # if the credentials are already all set, log in asynchronously
-        session_thread = threading.Thread(target=self.login_thread_defer)
-        session_thread.start()
+        self.session_thread = threading.Thread(target=self.login_thread_defer)
+        self.session_thread.start()
 
     def closeEvent(self, event):
         # save the new cache before closing
         if not "--no-cache" in sys.argv:
             self.settings.setValue('cached_timetable', self.cached_timetable)
         event.accept()
+        # cause a AssertionError to kill the login thread
+        try:
+            if self.session_thread.is_alive():
+                # causes a RuntimeError in login_thread_defer by starting the already-started thread.
+                # this is fully intentional, as we no longer need to login as we are already closing
+                # and if a login thread returns neither result nor timeout it could get stuck for ages, leaving the program unable to close
+                self.session_thread.start()
+        except AttributeError: # except threading removed _stop
+            pass
