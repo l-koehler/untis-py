@@ -190,7 +190,6 @@ class InfoPopup(QDialog):
             info_lbl.setWordWrap(True)
             self.lesson_tab.addTab(info_lbl, title)
         self.vlayout.addWidget(self.close_btn)
-        self.size
         self.close_btn.pressed.connect(self.close)
 
 class MainWindow(QMainWindow):
