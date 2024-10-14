@@ -101,5 +101,12 @@ def get_table(cache, session, starttime, endtime, no_cache=False):
     Structure of ret:
     list of "hours", each containing one list per day, each containing a period_specific_item
     """
-    cache.append([starttime, ret])
+    c_touched = False
+    for i in range(len(cache)):
+        cache_entry = cache[i]
+        if cache_entry[0] == starttime:
+            cache[i] = [starttime, ret]
+            c_touched = True
+    if not c_touched:
+        cache.append([starttime, ret])
     return [False, ret]

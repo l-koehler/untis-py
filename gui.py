@@ -107,7 +107,7 @@ class InfoPopup(QDialog):
             self.warning.setText("<h2>Cache-only!</h2><p>Some Details are not available<br>while not logged in.</p><p>You should get logged in<br>automatically if your internet works.</p>")
             self.warning.setWordWrap(True)
             self.stale_data = True
-        if (parent.week_is_cached and not self.stale_data):
+        elif (parent.week_is_cached):
             parent.fetch_week(True)
         self.lesson_tab = QTabWidget()
         self.vlayout.addWidget(self.lesson_tab)
