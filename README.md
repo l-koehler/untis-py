@@ -40,14 +40,9 @@ You can move the resulting exe wherever, there is no proper installation.
 
 ### Logging in
 
-The server should be something like `subdomain.webuntis.com` and is the   
-domain + subdomain you use when logging into the website.  
-
-The school is found in the `?school=` URL parameter of the website login page.  
-
-For example:
-The login URL `https://thing.webuntis.com/WebUntis/?school=HS+Example+School#/basic/login`  
-will result in the server `thing.webuntis.com` and the school `HS+Example+School`.  
+Search your School in the top textbox, then select it from the dropdown menu.  
+If you can't find your school, look at what is written behind the `?school=`  
+part of the login website.  
 
 The username and password are just whatever you use for the website.  
 
@@ -66,6 +61,7 @@ The username and password are just whatever you use for the website.
   passed to the program, QSettings will not be used.  
   In combination with `--text-only`, this allows for usage of the program  
   without installing PyQt.  
+  School like in the URL parameter, server only subdomain.webuntis.com  
 
 ### Terminal-only arguments
 * Use `-t` or `--text-only` to not use an UI,  
@@ -83,5 +79,5 @@ magick ./icon.svg -transparent white ./icon.png && magick -resize 48x48 ./icon.p
 ```
 This Program is GPL3-licensed to be compatible with [BetterUntis](https://github.com/sapuseven/betteruntis),  
 from which some code and a lot of research was copied.  
-In particular, several functions in App_API (api.py) are translated from BetterUntis.  
+In particular, several functions in web_utils.py are translated from BetterUntis.  
 
