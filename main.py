@@ -61,12 +61,30 @@ if None in credentials:
     if credentials[2] == None: credentials[2] = settings.value('user')
     if credentials[3] == None: credentials[3] = settings.value('password')
 
-session = api.login(credentials)
-if type(session) == list:
-    print(f"Failed to login: {session[1]}")
-    exit(1)
-
-timetable = api.get_table([], session, starttime, endtime)[1]
+timetable = None
+if '--force-cache' in sys.argv:
+    use_qt5 = True
+    if not "--qt5" in sys.argv:
+        use_qt5 = False
+        try:
+            from PyQt6.QtCore import QSettings
+        except ImportError:
+            use_qt5 = True
+    if use_qt5:
+        from PyQt5.QtCore import QSettings
+    settings = QSettings('l-koehler', 'untis-py')
+    cache = settings.value('cached_timetable') or []
+    timetable = api.get_cached(cache, starttime)
+    if timetable[0] == "err":
+        print(f"{timetable[1]}: {timetable[2]}")
+        exit(1)
+    timetable = timetable[1]
+else:
+    session = api.API(credentials, cache)
+    if session.error_state != None:
+        print(f"Failed to login: {session.error_state}")
+        exit(1)
+    timetable = session.get_table(starttime, endtime)[1]
 
 # total mess, but transforms the API response into a nice-looking table
 """

@@ -61,6 +61,7 @@ The username and password are just whatever you use for the website.
   This does not disable caching entirely, just the loading/saving!  
 * Use `--force-cache` to enter cache-only mode. This will prevent  
   the program from connecting to WebUntis entirely.  
+  This is also the __only way of viewing cached data in text-only mode__.
 * If `--credentials <server> <school> <username> <password>` is  
   passed to the program, QSettings will not be used.  
   In combination with `--text-only`, this allows for usage of the program  
