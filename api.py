@@ -1,4 +1,4 @@
-import webuntis, json, requests, urllib, time, base64, hmac, hashlib, web_utils
+import webuntis, json, requests, urllib, time, web_utils
 import datetime as dt
 
 def get_cached(cache, starttime):
@@ -27,8 +27,8 @@ def school_search(partial_name):
     ]
 
 """
-This part directly accesses the public/documented API and
-uses App_API for access to the undocumented one
+This part combines the two untis APIs to get a usable timetable
+It also deals with caching logic and some reformatting
 """
 
 class API:
@@ -104,9 +104,13 @@ class API:
                     for period in list(lesson):
                         subject = period.subjects[0]
                         for exam in exam_table:
-                            if exam["subjectId"] == subject.id and exam["startDateTime"] == period.start.strftime('%Y-%m-%dT%H:%M') + 'Z':
-                                period.code = "exam"
-                                period.type = "ex"
+                            if exam["subjectId"] == subject.id:
+                                exam_start = dt.datetime.strptime(exam["startDateTime"], '%Y-%m-%dT%H:%MZ')
+                                exam_end = dt.datetime.strptime(exam["endDateTime"], '%Y-%m-%dT%H:%MZ')
+                                is_within_period = exam_start <= period.start and exam_end >= period.end
+                                if is_within_period:
+                                    period.code = "exam"
+                                    period.type = "ex"
                         # period_specific_item: A single Lesson.
                         # This Lesson is packed in a list with other lessons at the same time.
                         notes = []
@@ -163,7 +167,6 @@ class API:
 """
 This part deals with the undocumented mobile API.
 Some repeated functions were split into web_utils.py.
-These functions sometimes are translated code from https://github.com/SapuSeven/BetterUntis
 Refer to https://github.com/SapuSeven/BetterUntis/wiki/Untis-Mobile-API-Reference
 """
 class App_API:
@@ -184,44 +187,15 @@ class App_API:
     def login(self):
         self.getAppSharedSecret()
         self.getUserData()
-        
-
-    # verify_code and create_time_based_code are almost completely from BetterUntis
-    def verify_code(self, key: bytes, time: int) -> int:
-        t = time
-        array_of_byte = bytearray(8)
-
-        for i in range(8):
-            array_of_byte[7 - i] = t & 0xFF
-            t >>= 8
-
-        local_mac = hmac.new(key, array_of_byte, hashlib.sha1)
-        hashed_key = local_mac.digest()
-        k = hashed_key[19] & 0xFF
-        t = 0
-
-        for i in range(4):
-            l = hashed_key[(k & 0xF) + i] & 0xFF
-            t = (t << 8) | l
-
-        return (t & 0x7FFFFFFF) % 1000000
-
-    def create_time_based_code(self) -> int:
-        timestamp = int(time.time() * 1000)
-        if self.secret and len(self.secret) > 0:
-            decoded_key = base64.b32decode(self.secret.upper(), casefold=True)
-            return self.verify_code(decoded_key, timestamp // 30000)  # Code will change every 30000 milliseconds
-        else:
-            return 0
 
     def getAuth(self):
         auth = {
             "clientTime": int(time.time() * 1000),
-            "otp": self.create_time_based_code(),
+            "otp": web_utils.create_time_based_code(self.secret),
             "user": self.username
         }
         return auth
-    
+
     def getAppSharedSecret(self):
         url_params = {
             "school": self.school,
@@ -274,4 +248,20 @@ class App_API:
             "endDate": friday.isoformat()
         }
         response = self.genericAuthenticatedRequest("getExams2017", params)
+        return response
+
+    # unused
+    # works, but would be a pain to write so we keep using 'webuntis' for this
+    def getTimetable(self, monday, friday):
+        params = {
+            "id": self.user_id,
+            "type": self.user_type,
+            "startDate": monday.isoformat(),
+            "endDate": friday.isoformat(),
+            # the following parameters are commented as "unknown usage" on BetterUntis
+            "masterDataTimestamp": 0,
+            "timetableTimestamp": 0,
+            "timetableTimestamps": []
+        }
+        response = self.genericAuthenticatedRequest("getTimetable2017", params)
         return response
