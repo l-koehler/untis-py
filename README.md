@@ -2,8 +2,6 @@
 ## For the official (mobile) App, visit untis.at!
 
 ### Limitations
-Read-only: The API is read-only, can't do anything about that.  
-No Tests: These are not exposed through the API, can't change that. 
 Weeks are limited to 5 days with 8 hours. Might change later.  
 The UI is atrocious: seriously it takes up 3/4 of my screen, sorry ig  
 
@@ -13,7 +11,8 @@ You need the following Dependencies:
 * PyQt6 (you can also use PyQt5 by passing `--qt5` to the program)  
 * webuntis    (python package)  
 * py-datetime (python package)  
-* [pyWebuntis](https://github.com/michilyy/pyWebUntis)
+
+Also required, but commonly already present is the "requests" package.  
 
 Install these and run `python3 ./main.py` to see if it works.  
 If you want to have it available in the Menu, run `./install.sh` (on linux).  
@@ -81,3 +80,7 @@ If you changed the `icon.svg` file, regenerate the `.ico`/`.png` files:
 magick -background transparent -define 'icon:auto-resize=16,24,32,64' ./icon.svg ./icon.ico
 magick ./icon.svg -transparent white ./icon.png && magick -resize 48x48 ./icon.png ./icon.png
 ```
+This Program is GPL3-licensed to be compatible with [BetterUntis](https://github.com/sapuseven/betteruntis),  
+from which some code and a lot of research was copied.  
+In particular, several functions in App_API (api.py) are translated from BetterUntis.  
+

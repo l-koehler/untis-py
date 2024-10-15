@@ -332,9 +332,9 @@ class MainWindow(QMainWindow):
             self.user     = self.settings.value('user')
             self.password = self.settings.value('password')
         if not "--no-cache" in sys.argv:
-            self.cached_timetable = self.settings.value('cached_timetable') or []
+            self.ref_cache = self.settings.value('cached_timetable') or []
         else:
-            self.cached_timetable = []
+            self.ref_cache = []
 
     def delete_settings(self):
         self.settings.clear()
@@ -346,7 +346,7 @@ class MainWindow(QMainWindow):
         # try to start a new session
         credentials = [self.server, self.school, self.user, self.password]
         if None not in credentials and '' not in credentials:
-            self.session = api.login(credentials)
+            self.session = api.API(credentials, self.ref_cache)
             if type(self.session) != list: # if login successful
                 self.fetch_week()
             else:
@@ -454,9 +454,9 @@ class MainWindow(QMainWindow):
 
         if "--fake-data" not in sys.argv:
             if self.force_cache:
-                self.data = api.get_cached(self.cached_timetable, monday)
+                self.data = api.get_cached(self.ref_cache, monday)
             else:
-                self.data = api.get_table(self.cached_timetable, self.session, monday, friday, replace_cache)
+                self.data = self.session.get_table(monday, friday, replace_cache)
             if self.data != [] and self.data[0] == "err":
                 if not silent:
                     QMessageBox.critical(
@@ -481,7 +481,7 @@ class MainWindow(QMainWindow):
             self.resize(self.width(), self.cache_warning[0])
         
         def cache_refresh(parent, monday, friday):
-            data = api.get_table([], parent.session, monday, friday, True)
+            data = parent.session.get_table(monday, friday, True)
             if (data[0] == "err"):
                 QMessageBox.critical(
                     parent,
@@ -509,10 +509,11 @@ class MainWindow(QMainWindow):
         self.date_edit.setDate(QDate.currentDate())
 
     def reload_all(self):
-        self.cached_timetable = []
+        self.ref_cache = []
         # delete all rows and draw empty table to make the reload visible
         self.timetable.setRowCount(0)
         self.timetable.repaint()
+        self.session = api.API([self.server, self.school, self.user, self.password], self.ref_cache)
         self.fetch_week()
         self.is_interactive = True
 
@@ -524,7 +525,6 @@ class MainWindow(QMainWindow):
     def login_thread(self):
         if not self.session_trip:
             return
-
         credentials = [self.server, self.school, self.user, self.password]
         if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
             if type(self.session) != list: # if login successful (already tried pre-trip)
@@ -562,13 +562,13 @@ class MainWindow(QMainWindow):
     def login_thread_defer(parent):
         credentials = [parent.server, parent.school, parent.user, parent.password]
         if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
-            parent.session = api.login(credentials)
+            parent.session = api.API(credentials, parent.ref_cache)
+
         # trip in any case, to ensure the fairly frequent login timer doesn't run forever
         parent.session_trip = True
 
     def __init__(self):
         super().__init__()
-
         self.settings = QSettings('l-koehler', 'untis-py')
         self.is_interactive = False
         self.redraw_trip = False # tripped by thread whenever the data was asynchronously refreshed
@@ -641,7 +641,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         # save the new cache before closing
         if not "--no-cache" in sys.argv:
-            self.settings.setValue('cached_timetable', self.cached_timetable)
+            self.settings.setValue('cached_timetable', self.session.cache)
         event.accept()
         # cause a AssertionError to kill the login thread
         if self.session_thread.is_alive():
