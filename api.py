@@ -1,4 +1,4 @@
-import webuntis, json
+import webuntis, json, requests
 
 def login(credentials):
     new_session = webuntis.Session(
@@ -23,6 +23,29 @@ def get_cached(cache, starttime):
             return [True, cache_entry[1]]
     return ["err", "Reading Timetable failed", f"Week not cached, but cache-only mode active!"]
 
+def school_search(partial_name):
+    # return: [display name, server URL]
+    print("searching")
+    baseurl = "https://schoolsearch.webuntis.com/schoolquery2"
+    json = {
+        "id": "untis-mobile-blackberry-2.7.4",
+        "jsonrpc": "2.0",
+        "method": "searchSchool",
+        "params": [{
+            "search": f"{partial_name}"
+        }]
+    }
+    data = requests.post(url=baseurl, json=json).json()
+    
+    if "error" in data:
+        print(data)
+        return [data["error"]["message"], "ERR"]
+    return [
+        [school["loginName"],
+         school["serverUrl"].split("://")[1].split("/")[0]
+         ] for school in data["result"]["schools"]
+    ]
+
 def get_table(cache, session, starttime, endtime, no_cache=False):
     # try loading from cache
     timetable = None
@@ -40,6 +63,8 @@ def get_table(cache, session, starttime, endtime, no_cache=False):
         if (err == "startDate and endDate are not within a single school year."):
             return ["err", "Reading Timetable failed", "Weeks spanning several school years are not supported!"]
         return ["err", "Reading Timetable failed", f"Server replied with error: \"{err}\"!"]
+    if "error" in timetable:
+        return ["err", "Unknown Error", f"Server replied with error: \"{err}\"!"]
     ret = []
     # add one because same-day still is one day
     time_range = range((endtime - starttime).days + 1)
@@ -101,6 +126,5 @@ def get_table(cache, session, starttime, endtime, no_cache=False):
     Structure of ret:
     list of "hours", each containing one list per day, each containing a period_specific_item
     """
-
     cache = [i for i in cache if i[0] != starttime].append([starttime, ret])
     return [False, ret]

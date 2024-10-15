@@ -13,6 +13,7 @@ You need the following Dependencies:
 * PyQt6 (you can also use PyQt5 by passing `--qt5` to the program)  
 * webuntis    (python package)  
 * py-datetime (python package)  
+* [pyWebuntis](https://github.com/michilyy/pyWebUntis)
 
 Install these and run `python3 ./main.py` to see if it works.  
 If you want to have it available in the Menu, run `./install.sh` (on linux).  

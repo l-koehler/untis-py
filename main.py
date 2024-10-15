@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import sys, api
 from datetime import date
 from dateutil.relativedelta import relativedelta, FR, MO

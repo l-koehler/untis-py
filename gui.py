@@ -9,14 +9,14 @@ if not "--qt5" in sys.argv:
         from PyQt6.QtCore import Qt, QDate, QSettings, pyqtSignal, QTimer
         from PyQt6 import QtCore
         from PyQt6.QtGui import QShortcut, QKeySequence, QIcon, QBrush, QColor
-        from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QSizePolicy, QSpacerItem, QToolButton, QDateEdit, QTableWidget, QStatusBar, QDialogButtonBox, QTabWidget
+        from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QSizePolicy, QSpacerItem, QToolButton, QDateEdit, QTableWidget, QStatusBar, QTabWidget, QComboBox
     except ImportError:
         use_qt5 = True
 if use_qt5:
     from PyQt5.QtCore import Qt, QDate, QSettings, pyqtSignal, QTimer
     from PyQt5 import QtCore
     from PyQt5.QtGui import QIcon, QBrush, QColor, QKeySequence
-    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QShortcut, QSizePolicy, QSpacerItem, QToolButton, QDateEdit, QTableWidget, QStatusBar, QDialogButtonBox, QTabWidget
+    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QShortcut, QSizePolicy, QSpacerItem, QToolButton, QDateEdit, QTableWidget, QStatusBar,  QTabWidget, QComboBox
 
 class QFrame_click(QFrame):
     clicked = pyqtSignal()
@@ -30,61 +30,98 @@ def size_policy():
         return QSizePolicy.Policy
 
 class LoginPopup(QDialog):
-    def save(self):
-        # fix some common mistakes with the server address
-        # remove http(s) prefix and (trailing) slashes
-        server_text = re.sub(r'https?://', '', self.server_le.text()).replace('/', '')
-                
-        self.settings.setValue('server', self.server_le.text())
-        self.settings.setValue('school', self.school_le.text())
+    def save(self):                
+        self.settings.setValue('server', self.server)
+        self.settings.setValue('school', self.school)
         self.settings.setValue('user', self.user_le.text())
         self.settings.setValue('password', self.password_le.text())
+        self.close()
+    
+    def cb_change(self):
+        if self.old_text == self.school_le.text():
+            return
+        self.old_text = self.school_le.text()
+        
+        results = api.school_search(self.school_le.text())
+        entries = [i[0] for i in results]
+        self.school_cb.clear()
+
+        if len(results) == 2 and results[1] == "ERR":
+            self.school_cb.addItem(results[0])
+            self.err_backed = True
+        elif len(results) == 0:
+            self.school_cb.addItem("No Results")
+            self.err_backed = True
+        else:
+            self.school_cb.addItems(entries)
+            self.err_backed = False
+            
+    def cb_sel(self):
+        if self.err_backed:
+            return
+        data = api.school_search(self.school_cb.currentText())
+        if len(data) == 0 or (len(data) == 2 and data[1] == "ERR"):
+            return
+        self.server = api.school_search(self.school_cb.currentText())[0][1]
+        self.school = self.school_cb.currentText()
+        
     def __init__(self, settings):
         QWidget.__init__(self)
-        self.setWindowTitle("Dialog")
-        self.resize(172, 244)
-        self.dialog_btnb = QDialogButtonBox(self)
-        self.dialog_btnb.setGeometry(QtCore.QRect(0, 210, 161, 32))
-
-        self.server_le = QLineEdit(self)
-        self.server_le.setGeometry(QtCore.QRect(10, 30, 151, 22))
-        self.server_lbl = QLabel(self)
-        self.server_lbl.setGeometry(QtCore.QRect(10, 10, 151, 17))
-        self.server_lbl.setText("Server:")
-        self.school_lbl = QLabel(self)
-        self.school_lbl.setGeometry(QtCore.QRect(10, 60, 151, 17))
-        self.school_lbl.setText("School:")
-        self.school_le = QLineEdit(self)
-        self.school_le.setGeometry(QtCore.QRect(10, 80, 151, 22))
-        self.user_lbl = QLabel(self)
-        self.user_lbl.setGeometry(QtCore.QRect(10, 110, 151, 17))
-        self.user_lbl.setText("Username:")
-        self.user_le = QLineEdit(self)
-        self.user_le.setGeometry(QtCore.QRect(10, 130, 151, 22))
-        self.password_lbl = QLabel(self)
-        self.password_lbl.setGeometry(QtCore.QRect(10, 160, 151, 17))
-        self.password_lbl.setText("Password:")
-        self.password_le = QLineEdit(self)
-        self.password_le.setGeometry(QtCore.QRect(10, 180, 151, 22))
+        self.old_text = ""
+        self.err_backed = True
+        self.search_timer = QTimer()
+        self.search_timer.timeout.connect(self.cb_change)
+        self.search_timer.start(1000) # only search once a second at most
+        self.vlayout = QVBoxLayout(self)
         
-        if (use_qt5):
-            self.dialog_btnb.setOrientation(QtCore.Qt.Horizontal)
-            self.dialog_btnb.setStandardButtons(QDialogButtonBox.Cancel|QDialogButtonBox.Ok)
-            self.password_le.setEchoMode(QLineEdit.PasswordEchoOnEdit)
-        else:
-            self.dialog_btnb.setOrientation(QtCore.Qt.Orientation.Horizontal)
-            self.dialog_btnb.setStandardButtons(QDialogButtonBox.StandardButton.Cancel|QDialogButtonBox.StandardButton.Ok)
-            self.password_le.setEchoMode(QLineEdit.EchoMode.PasswordEchoOnEdit)
+        self.setWindowTitle("Edit Credentials")
+        self.resize(172, 244)
 
-        self.dialog_btnb.accepted.connect(self.accept) # type: ignore
-        self.dialog_btnb.rejected.connect(self.reject) # type: ignore
+        self.school_lbl = QLabel()
+        self.vlayout.addWidget(self.school_lbl)
+        self.school_lbl.setText("School:")
+        
+        self.school_le = QLineEdit()
+        self.vlayout.addWidget(self.school_le)
+
+        self.school_cb = QComboBox()
+        self.vlayout.addWidget(self.school_cb)
+        self.school_cb.currentIndexChanged.connect(self.cb_sel)
+        
+        self.user_lbl = QLabel()
+        self.vlayout.addWidget(self.user_lbl)
+        self.user_lbl.setText("Username:")
+        self.user_le = QLineEdit()
+        self.vlayout.addWidget(self.user_le)
+
+        self.password_lbl = QLabel()
+        self.vlayout.addWidget(self.password_lbl)
+
+        self.password_lbl.setText("Password:")
+        self.password_le = QLineEdit()
+        self.vlayout.addWidget(self.password_le)
+        
+        self.btn_layout = QHBoxLayout()
+        self.vlayout.addLayout(self.btn_layout)
+
+        self.btn_ok = QPushButton()
+        self.btn_ok.setText("Save")
+        self.btn_layout.addWidget(self.btn_ok)
+        self.btn_cc = QPushButton()
+        self.btn_cc.setText("Cancel")
+        self.btn_layout.addWidget(self.btn_cc)
+        
+        self.btn_ok.pressed.connect(self.save) # type: ignore
+        self.btn_cc.pressed.connect(self.close) # type: ignore
         
         self.settings = settings
-        self.server_le.setText(self.settings.value('server') or '')
+        
+        self.server = self.settings.value('server') or ''
+        
         self.school_le.setText(self.settings.value('school') or '')
+        self.school = self.settings.value('school') or ''
         self.user_le.setText(self.settings.value('user') or '')
         self.password_le.setText(self.settings.value('password') or '')
-        self.dialog_btnb.accepted.connect(self.save)
 
 class InfoPopup(QDialog):
     def __init__(self, parent):        
