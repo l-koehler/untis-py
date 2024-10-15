@@ -25,7 +25,6 @@ def get_cached(cache, starttime):
 
 def school_search(partial_name):
     # return: [display name, server URL]
-    print("searching")
     baseurl = "https://schoolsearch.webuntis.com/schoolquery2"
     json = {
         "id": "untis-mobile-blackberry-2.7.4",
@@ -38,7 +37,6 @@ def school_search(partial_name):
     data = requests.post(url=baseurl, json=json).json()
     
     if "error" in data:
-        print(data)
         return [data["error"]["message"], "ERR"]
     return [
         [school["loginName"],
@@ -122,7 +120,7 @@ def get_table(cache, session, starttime, endtime, no_cache=False):
                     day_ret.append(period_specific_item)
                 blob_ret[day_n] = day_ret
             ret.append(blob_ret)
-    """"
+    """
     Structure of ret:
     list of "hours", each containing one list per day, each containing a period_specific_item
     """
