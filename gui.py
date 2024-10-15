@@ -131,21 +131,6 @@ class InfoPopup(QDialog):
         self.close_btn = QPushButton()
         self.close_btn.setText("Close")
         self.close_btn.pressed.connect(self.close)
-        self.stale_data = False
-        if (parent.force_cache):
-            self.warning = QLabel()
-            self.vlayout.addWidget(self.warning)
-            self.warning.setText("<h2>Cache-only!</h2><p>Some Details are not available<br>in cache-only mode.</p><p>To disable cache-only mode, restart the program.</p>")
-            self.warning.setWordWrap(True)
-            self.stale_data = True
-        elif (parent.session in [None, []]):
-            self.warning = QLabel()
-            self.vlayout.addWidget(self.warning)
-            self.warning.setText("<h2>Cache-only!</h2><p>Some Details are not available<br>while not logged in.</p><p>You should get logged in<br>automatically if your internet works.</p>")
-            self.warning.setWordWrap(True)
-            self.stale_data = True
-        elif (parent.week_is_cached):
-            parent.fetch_week(True)
         self.lesson_tab = QTabWidget()
         self.vlayout.addWidget(self.lesson_tab)
         self.lesson_tab.setCurrentIndex(1)
@@ -166,62 +151,37 @@ class InfoPopup(QDialog):
                 self.content.setText("<h2>No Lesson planned!</h2>")
                 self.content.setWordWrap(True)
                 continue
-                
+
             lesson = hour_data[i]
-            if not self.stale_data:
-                full_repl = lesson[-1]
+            full_repl = lesson[-1]
 
-                try:
-                    room_str = f"{full_repl.rooms[0].name}"
-                    if full_repl.original_rooms != full_repl.rooms and full_repl.original_rooms != []:
-                        room_str += f" (originally in {full_repl.original_rooms[0].name})"
-                except IndexError:
-                    room_str = "Unknown"
-
-                if full_repl.activityType != "Unterricht": # why is it localized qwq
-                    status_str = full_repl.activityType
-                elif full_repl.code == "cancelled":
-                    status_str = "Cancelled"
-                elif full_repl.code == "irregular":
-                    status_str = "Substitution"
-                elif full_repl.type == "ls":
-                    status_str = "Regular"
-                elif full_repl.type == "oh":
-                    status_str = "Office Hour"
-                elif full_repl.type == "sb":
-                    status_str = "Standby"
-                elif full_repl.type == "bs":
-                    status_str = "Break Supervision"
-                elif full_repl.type == "ex":
-                    status_str = "Examination"
-                else:
-                    status_str = "unknown/report error"
-
-                if len(full_repl.klassen) == 1:
-                    klassen_str = full_repl.klassen[0]
-                else:
-                    klassen_str = '; '.join([i.name for i in full_repl.klassen])
-
-                long_name = full_repl.subjects[0].long_name
-                starttime = full_repl.start.time().strftime('%H:%M')
-                endtime = full_repl.end.time().strftime('%H:%M')
+            if full_repl.activityType != "Unterricht": # why is it localized qwq
+                status_str = full_repl.activityType
+            elif full_repl.code == "cancelled":
+                status_str = "Cancelled"
+            elif full_repl.code == "irregular":
+                status_str = "Substitution"
+            elif full_repl.type == "ls":
+                status_str = "Regular"
+            elif full_repl.type == "oh":
+                status_str = "Office Hour"
+            elif full_repl.type == "sb":
+                status_str = "Standby"
+            elif full_repl.type == "bs":
+                status_str = "Break Supervision"
+            elif full_repl.type == "ex":
+                status_str = "Examination"
             else:
-                long_name = lesson[0]
-                starttime = ""
-                endtime = ""
-                status_str = ""
-                room_str = lesson[1]
-                klassen_str = ""
-            rt_info = f"<h4>{long_name}</h4>"
-            if starttime:
-                rt_info += f"<br>Start: {starttime}"
-            if endtime:
-                rt_info += f"<br>End: {endtime}"
+                status_str = "unknown/report error"
+
+            rt_info = f"<h4>{full_repl.long_name}</h4>"
+            rt_info += f"<br>Start: {full_repl.starttime}"
+            rt_info += f"<br>End: {full_repl.endtime}"
             if status_str:
                 rt_info += f"<br>Type: {status_str}"
-            rt_info += f"<br>Room: {room_str}"
-            if klassen_str:
-                rt_info += f"<br>Classes: {klassen_str}"
+            rt_info += f"<br>Room: {full_repl.room_str}"
+            if full_repl.klassen_str:
+                rt_info += f"<br>Classes: {full_repl.klassen_str}"
             if lesson[2]:
                 rt_info += f"<br>Info: {lesson[2]}"
             title = f"{i+1}: {lesson[0]}"
@@ -525,15 +485,17 @@ class MainWindow(QMainWindow):
     def login_thread(self):
         if not self.session_trip:
             return
+
+
         credentials = [self.server, self.school, self.user, self.password]
         if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
-            if type(self.session) != list: # if login successful (already tried pre-trip)
+            if self.session.error_state == None: # if login successful (already tried pre-trip)
                 self.fetch_week()
             else:
                 box = QMessageBox (
                     QMessageBox.Icon.Critical,
-                    self.session[0],
-                    f"<h3>Login Failed!</h3><b>Details:</b><br>{self.session[1]}<h4>Use cached data only?</h4>",
+                    "Login Failed!",
+                    f"<h3>Login Failed!</h3><b>Details:</b><br>{self.session.error_state}<h4>Use cached data only?</h4>",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
                 )
                 self.force_cache = (box.exec() == QMessageBox.StandardButton.Yes)
@@ -640,7 +602,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         # save the new cache before closing
-        if not "--no-cache" in sys.argv:
+        if not "--no-cache" in sys.argv and self.session != None:
             self.settings.setValue('cached_timetable', self.session.cache)
         event.accept()
         # cause a AssertionError to kill the login thread

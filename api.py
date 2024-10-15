@@ -27,6 +27,29 @@ def school_search(partial_name):
     ]
 
 """
+Version of "PeriodObject" that doesn't include any session references.
+Used for Lesson Info popups from cache
+"""
+class SerPeriod:
+    def __init__(self, periodObject):
+        self.activityType = str(periodObject.activityType)
+        self.code = str(periodObject.code)
+        self.type = str(periodObject.type)
+        if len(periodObject.klassen) == 1:
+            self.klassen_str = periodObject.klassen[0].name
+        else:
+            self.klassen_str = '; '.join([i.name for i in periodObject.klassen])
+        self.long_name = periodObject.subjects[0].long_name
+        self.starttime = periodObject.start.time().strftime('%H:%M')
+        self.endtime = periodObject.end.time().strftime('%H:%M')
+        try:
+            self.room_str = f"{periodObject.rooms[0].name}"
+            if periodObject.original_rooms != periodObject.rooms and periodObject.original_rooms != []:
+                self.room_str += f" (originally in {periodObject.original_rooms[0].name})"
+        except IndexError:
+            self.room_str = "Unknown"
+
+"""
 This part combines the two untis APIs to get a usable timetable
 It also deals with caching logic and some reformatting
 """
@@ -152,7 +175,7 @@ class API:
                             color = period.code_color
                         else:
                             color = "white"
-                        period_specific_item = [subject.name, room_str, notes_str, color, period]
+                        period_specific_item = [subject.name, room_str, notes_str, color, SerPeriod(period)]
                         day_ret.append(period_specific_item)
                     blob_ret[day_n] = day_ret
                 ret.append(blob_ret)
