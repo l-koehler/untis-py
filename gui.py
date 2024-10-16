@@ -23,6 +23,11 @@ class QFrame_click(QFrame):
     def mousePressEvent(self, ev):
         self.clicked.emit()
 
+class QLabel_click(QLabel):
+    clicked = pyqtSignal()
+    def mousePressEvent(self, ev):
+        self.clicked.emit()
+
 def size_policy():
     if use_qt5:
         return QSizePolicy
@@ -124,7 +129,7 @@ class LoginPopup(QDialog):
         self.password_le.setText(self.settings.value('password') or '')
 
 class InfoPopup(QDialog):
-    def __init__(self, parent):        
+    def __init__(self, parent, index):        
         QWidget.__init__(self)
         self.setWindowTitle("Lesson Info")
         self.vlayout = QVBoxLayout(self)
@@ -189,6 +194,7 @@ class InfoPopup(QDialog):
             info_lbl.setWordWrap(True)
             self.lesson_tab.addTab(info_lbl, title)
         self.vlayout.addWidget(self.close_btn)
+        self.lesson_tab.setCurrentIndex(index)
         self.close_btn.pressed.connect(self.close)
 
 class MainWindow(QMainWindow):
@@ -317,9 +323,9 @@ class MainWindow(QMainWindow):
                 )
                 self.session = None
 
-    def info_popup(self):
+    def info_popup(self, index=0):
         if self.is_interactive:
-            popup = InfoPopup(self)
+            popup = InfoPopup(self, index)
             popup.exec()
     
     def draw_week(self):
@@ -341,6 +347,7 @@ class MainWindow(QMainWindow):
                 try:
                     entry_data = self.data[row][col]
                     # add the on-click function for lesson info. dont change the lambda it barely works as-is
+                    # this is a generic function that calls info_popup without index hint
                     if (len(entry_data) != 0):
                         fn = lambda row=row, col=col: f"{self.timetable.setCurrentCell(row, col)}\n{self.info_popup()}"
                         widget.clicked.connect(fn)
@@ -361,7 +368,9 @@ class MainWindow(QMainWindow):
                 entry_data.sort()
                 for i in range(len(entry_data)):
                     lesson = entry_data[i]
-                    lesson_widget = QLabel()
+                    lesson_widget = QLabel_click()
+                    fn = lambda row=row, col=col, i=i: f"{self.timetable.setCurrentCell(row, col)}\n{self.info_popup(i)}"
+                    lesson_widget.clicked.connect(fn)
                     lesson_widget.setTextFormat(Qt.TextFormat.RichText)
                     richtext = f"<b>{lesson[0]}</b><br>{lesson[1]}"
                     stylesheet = f"padding-right:4px; padding-left:4px; margin-top: 4px; margin-bottom:4px; border-radius:4px;"
