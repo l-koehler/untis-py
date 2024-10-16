@@ -280,7 +280,6 @@ class MainWindow(QMainWindow):
         
     current_date = QDate.currentDate()
     def date_changed(self):
-        print("change ticked")
         new_date = self.date_edit.date()
         if self.current_date.weekNumber() != new_date.weekNumber():
             self.fetch_week()
@@ -331,6 +330,10 @@ class MainWindow(QMainWindow):
         self.is_interactive = False
 
         self.timetable.setRowCount(len(self.data))
+
+        if not self.week_is_cached:
+            self.verticalLayout.removeWidget(self.cache_warning[1])
+            self.resize(self.width(), self.cache_warning[0])
 
         for row in range(len(self.data)):
             for col in range(len(self.data[row])):
@@ -420,6 +423,7 @@ class MainWindow(QMainWindow):
             return
 
         if not (replace_cache or skip_cache):
+            self.week_is_cached = True
             # quickly load some cache data
             self.data = api.get_cached(self.ref_cache, monday)
             if self.force_cache:
@@ -438,26 +442,20 @@ class MainWindow(QMainWindow):
                 self.data = self.data[1]
                 self.draw_week()
         # properly fetch data
-        self.data = self.session.get_table(monday, friday, replace_cache)
-        if self.data != [] and self.data[0] == "err":
-            if not silent:
-                QMessageBox.critical(
-                    self,
-                    self.data[1],
-                    self.data[2]
-                )
-            return
-        self.week_is_cached = self.data[0]
-        self.data = self.data[1]
-        
         if replace_cache:
+            self.data = self.session.get_table(monday, friday, (replace_cache or skip_cache))
+            if self.data != [] and self.data[0] == "err":
+                if not silent:
+                    QMessageBox.critical(
+                        self,
+                        self.data[1],
+                        self.data[2]
+                    )
+                return
+            self.week_is_cached = self.data[0]
+            self.data = self.data[1]
             return
 
-        self.draw_week()
-        if not silent and not self.force_cache:
-            self.verticalLayout.removeWidget(self.cache_warning[1])
-            self.resize(self.width(), self.cache_warning[0])
-        
         def cache_refresh(parent, monday, friday):
             data = parent.session.get_table(monday, friday, True)
             if (data[0] == "err"):
@@ -469,10 +467,11 @@ class MainWindow(QMainWindow):
                 return
             else:
                 parent.data = data[1]
+            parent.week_is_cached = False
             parent.redraw_trip = True
         
         # if our results were from cache, asynchronously refresh that
-        if (self.week_is_cached and self.force_cache == False):
+        if (self.week_is_cached and not self.force_cache and not replace_cache):
             # async start a thread with api.get_table
             api_thread = threading.Thread(target=cache_refresh, args = (self, monday, friday,))
             api_thread.start()
@@ -503,7 +502,6 @@ class MainWindow(QMainWindow):
     def login_thread(self):
         if not self.session_trip:
             return
-
 
         credentials = [self.server, self.school, self.user, self.password]
         if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
