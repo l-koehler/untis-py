@@ -5,7 +5,7 @@ def get_cached(cache, starttime):
     timetable = None
     for cache_entry in cache:
         if cache_entry[0] == starttime:
-            return [True, cache_entry[1]]
+            return [True, cache_entry[1], starttime]
     return ["err", "Reading Timetable failed", f"Week not cached, but cache-only mode active!"]
 
 def school_search(partial_name):
@@ -93,7 +93,7 @@ class API:
         if no_cache == False:
             for cache_entry in self.cache:
                 if cache_entry[0] == starttime:
-                    return [True, cache_entry[1]]
+                    return [True, cache_entry[1], cache_entry[0]]
         # didnt load, ask the server
         try:
             timetable = self.session.my_timetable(
@@ -185,7 +185,7 @@ class API:
         """
         self.cache = [i for i in self.cache if i[0] != starttime]
         self.cache.append([starttime, ret])
-        return [False, ret]
+        return [False, ret, starttime]
 
 """
 This part deals with the undocumented mobile API.

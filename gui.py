@@ -461,8 +461,9 @@ class MainWindow(QMainWindow):
             if data[0] == "err":
                 parent.err_data = data
             else:
+                parent.week_is_cached = data[0]
                 parent.data = data[1]
-                parent.week_is_cached = False
+                parent.tr_data_mon = data[2]
             parent.redraw_trip = True
         
         # if our results were from cache, asynchronously refresh that
@@ -500,7 +501,12 @@ class MainWindow(QMainWindow):
                 )
                 self.err_data = []
                 return
-            self.draw_week()
+            # check that we didn't race the thread and are still in the same week as the data
+            selected_day = self.date_edit.date().toPyDate()
+            week_number = selected_day.isocalendar()[1]
+            monday = dt.date.fromisocalendar(selected_day.year, week_number, 1)
+            if self.tr_data_mon == monday:
+                self.draw_week()
     
     def login_thread(self):
         if not self.session_trip:
@@ -602,6 +608,7 @@ class MainWindow(QMainWindow):
         self.force_cache = False
         self.cache_warning = None
         self.data = None
+        self.tr_data_mon = None
         self.session = None
         self.week_is_cached = False
         self.err_data = []
