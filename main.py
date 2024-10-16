@@ -79,7 +79,7 @@ if '--force-cache' in sys.argv:
         exit(1)
     timetable = timetable[1]
 else:
-    session = api.API(credentials, cache)
+    session = api.API(credentials, [])
     if session.error_state != None:
         print(f"Failed to login: {session.error_state}")
         exit(1)
