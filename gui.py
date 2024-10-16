@@ -1,4 +1,4 @@
-import sys, os, api, re, threading
+import sys, os, api, re, threading, time
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
 
@@ -280,6 +280,7 @@ class MainWindow(QMainWindow):
         
     current_date = QDate.currentDate()
     def date_changed(self):
+        print("change ticked")
         new_date = self.date_edit.date()
         if self.current_date.weekNumber() != new_date.weekNumber():
             self.fetch_week()
@@ -406,31 +407,48 @@ class MainWindow(QMainWindow):
             self.timetable.horizontalHeaderItem(i).setText(ref_tm.toString("dddd (d.M)"))
         self.is_interactive = True
 
-    def fetch_week(self, replace_cache=False, silent=False):
+    def fetch_week(self, replace_cache=False, silent=False, skip_cache=False):
         selected_day = self.date_edit.date().toPyDate()
         week_number = selected_day.isocalendar()[1]
         monday = dt.date.fromisocalendar(selected_day.year, week_number, 1)
         friday = dt.date.fromisocalendar(selected_day.year, week_number, 5)
 
-        if "--fake-data" not in sys.argv:
-            if self.force_cache:
-                self.data = api.get_cached(self.ref_cache, monday)
-            else:
-                self.data = self.session.get_table(monday, friday, replace_cache)
-            if self.data != [] and self.data[0] == "err":
-                if not silent:
-                    QMessageBox.critical(
-                        self,
-                        self.data[1],
-                        self.data[2]
-                    )
-                return
-            self.week_is_cached = self.data[0]
-            self.data = self.data[1]
-        else:
+        if "--fake-data" in sys.argv:
             self.data = [[[['mo 1', 'regular lesson', '', 'white', None]], [['tu 1', 'regular lesson', '', 'white', None]]], [[['mo 2', 'single, red', '', 'red', None]], [['tu 2', 'single, orange', '', 'orange', None]]], [[['mo 3', 'half, white', '', 'white', None], ['mo 3', 'second half', '', 'white', None]], [['hello', 'half, red', '', 'red', None], ['world', 'other half', '', 'white', None]]]]
             self.week_is_cached = False
+            self.draw_week()
+            return
 
+        if not (replace_cache or skip_cache):
+            # quickly load some cache data
+            self.data = api.get_cached(self.ref_cache, monday)
+            if self.force_cache:
+                if self.data != [] and self.data[0] == "err":
+                    if not silent:
+                        QMessageBox.critical(
+                            self,
+                            self.data[1],
+                            self.data[2]
+                        )
+                    return
+                self.data = self.data[1]
+                self.draw_week()
+                return
+            if self.data != [] and self.data[0] != "err":
+                self.data = self.data[1]
+                self.draw_week()
+        # properly fetch data
+        self.data = self.session.get_table(monday, friday, replace_cache)
+        if self.data != [] and self.data[0] == "err":
+            if not silent:
+                QMessageBox.critical(
+                    self,
+                    self.data[1],
+                    self.data[2]
+                )
+            return
+        self.week_is_cached = self.data[0]
+        self.data = self.data[1]
         
         if replace_cache:
             return
@@ -490,7 +508,7 @@ class MainWindow(QMainWindow):
         credentials = [self.server, self.school, self.user, self.password]
         if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
             if self.session.error_state == None: # if login successful (already tried pre-trip)
-                self.fetch_week()
+                self.fetch_week(skip_cache=True)
             else:
                 box = QMessageBox (
                     QMessageBox.Icon.Critical,
@@ -524,6 +542,7 @@ class MainWindow(QMainWindow):
     def login_thread_defer(parent):
         credentials = [parent.server, parent.school, parent.user, parent.password]
         if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
+            # this part can take forever in theory
             parent.session = api.API(credentials, parent.ref_cache)
 
         # trip in any case, to ensure the fairly frequent login timer doesn't run forever
