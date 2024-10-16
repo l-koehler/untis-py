@@ -1,4 +1,4 @@
-import sys, os, api, re, threading, time
+import sys, os, api, re, threading
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
 
@@ -458,16 +458,11 @@ class MainWindow(QMainWindow):
 
         def cache_refresh(parent, monday, friday):
             data = parent.session.get_table(monday, friday, True)
-            if (data[0] == "err"):
-                QMessageBox.critical(
-                    parent,
-                    data[1],
-                    data[2]
-                )
-                return
+            if data[0] == "err":
+                parent.err_data = data
             else:
                 parent.data = data[1]
-            parent.week_is_cached = False
+                parent.week_is_cached = False
             parent.redraw_trip = True
         
         # if our results were from cache, asynchronously refresh that
@@ -497,6 +492,14 @@ class MainWindow(QMainWindow):
     def test_trip_redraw(self):
         if self.redraw_trip != False:
             self.redraw_trip = False
+            if self.err_data != []:
+                QMessageBox.critical(
+                    self,
+                    self.err_data[1],
+                    self.err_data[2]
+                )
+                self.err_data = []
+                return
             self.draw_week()
     
     def login_thread(self):
@@ -601,6 +604,7 @@ class MainWindow(QMainWindow):
         self.data = None
         self.session = None
         self.week_is_cached = False
+        self.err_data = []
         self.show()
         
         # try loading cached data to display at-least-something during login/fetch (unless that'll happen anyways)

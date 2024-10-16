@@ -100,9 +100,9 @@ class API:
                 start=starttime, end=endtime
             )
             timetable = timetable.to_table()
+        except webuntis.errors.DateNotAllowed as err:
+            return ["err", "Reading Timetable failed", "Date not allowed! (is it within a single school year?)"]
         except Exception as err:
-            if (err == "startDate and endDate are not within a single school year."):
-                return ["err", "Reading Timetable failed", "Weeks spanning several school years are not supported!"]
             return ["err", "Reading Timetable failed", f"Server replied with error: \"{err}\"!"]
         if "error" in timetable:
             return ["err", "Unknown Error", f"Server replied with error: \"{err}\"!"]
