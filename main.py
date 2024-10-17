@@ -1,12 +1,26 @@
 #!/usr/bin/python3
-import sys, api
+import sys, api, argparse, time
 from datetime import date
 from dateutil.relativedelta import relativedelta, FR, MO
 
-if '-t' not in sys.argv and '--text-only' not in sys.argv:
+parser = argparse.ArgumentParser()
+parser.add_argument("-t", "--text-only", help="output to terminal instead of UI", action="store_true")
+force_ver = parser.add_mutually_exclusive_group()
+force_ver.add_argument("--force-qt5", help="only use pyqt5, fail even if pyqt6 is available", action="store_true")
+force_ver.add_argument("--force-qt6", help="only use pyqt6, fail even if pyqt5 is available", action="store_true")
+parser.add_argument("--delete-settings", help="delete settings (cache and credentials) before start", action="store_true")
+cache_mode = parser.add_mutually_exclusive_group()
+cache_mode.add_argument("--no-cache", help="skip reading/writing cache data", action="store_true")
+cache_mode.add_argument("--force-cache", help="never connect to webuntis, only use cache", action="store_true")
+parser.add_argument("-o", "--offset", help="offset the initially displayed week by OFFSET (positive or negative)", type=int, default=0)
+parser.add_argument("--no-color", help="don't highlight special lessons (text-only mode: disable color codes)", action="store_true")
+parser.add_argument("--credentials", nargs=4, metavar=("SERVER","SCHOOL","USERNAME","PASSWORD"), type=str, help="Temporary credentials that won't be saved. When used with text-only mode, pyqt is not needed.", default=None)
+args = parser.parse_args()
+
+if not args.text_only:
     import gui
     app = gui.QApplication(sys.argv)
-    window = gui.MainWindow()
+    window = gui.MainWindow(args)
     app.exec()
     sys.exit(0)
 
@@ -19,71 +33,44 @@ class colors:
     green  = "\033[92m"
     red    = "\033[91m"
     reset  = "\033[0m"
-use_color = not "--no-color" in sys.argv
-
-# server, school, username, password
-credentials = [None, None, None, None]
 starttime = date.today() + relativedelta(weekday=MO(-1))
-for index in range(len(sys.argv)):
-    if sys.argv[index] == '--credentials':
-        if len(sys.argv) < index+5:
-            print(f"--credentials takes 4 arguments, {len(sys.argv)-index-1} were passed!")
-            print("use --credentials <server> <school> <username> <password>")
-            exit(1)
-        credentials[0] = sys.argv[index+1]
-        credentials[1] = sys.argv[index+2]
-        credentials[2] = sys.argv[index+3]
-        credentials[3] = sys.argv[index+4]
-    elif sys.argv[index].startswith("-o"):
-        offset = int(sys.argv[index][2:])
-        starttime += relativedelta(weeks=offset)
-    elif sys.argv[index] == '--offset':
-        offset = int(sys.argv[index+1])
-        starttime += relativedelta(weeks=offset)
+starttime += relativedelta(weeks=args.offset)
 endtime = starttime + relativedelta(weekday=FR)
 
-if None in credentials:
-    # not all credentials were given, use QSettings to load them
-    print("\"--credentials <server> <school> <user> <password>\" not given, using QSettings!")
-    use_qt5 = True
-    if not "--qt5" in sys.argv:
-        use_qt5 = False
+qt_ver = None
+settings = None
+if args.credentials == None or not args.force_cache:
+    if args.force_qt5:
+        from PyQt5.QtCore import QSettings
+    elif args.force_qt6:
+        from PyQt6.QtCore import QSettings
+    else:
         try:
             from PyQt6.QtCore import QSettings
         except ImportError:
-            use_qt5 = True
-    if use_qt5:
-        from PyQt5.QtCore import QSettings
+            from PyQt5.QtCore import QSettings
     settings = QSettings('l-koehler', 'untis-py')
+
+# server, school, username, password
+credentials = [None, None, None, None]
+if args.credentials == None:
     if credentials[0] == None: credentials[0] = settings.value('server')
     if credentials[1] == None: credentials[1] = settings.value('school')
     if credentials[2] == None: credentials[2] = settings.value('user')
     if credentials[3] == None: credentials[3] = settings.value('password')
+else:
+    credentials = args.credentials
 
 timetable = None
-if '--force-cache' in sys.argv:
-    use_qt5 = True
-    if not "--qt5" in sys.argv:
-        use_qt5 = False
-        try:
-            from PyQt6.QtCore import QSettings
-        except ImportError:
-            use_qt5 = True
-    if use_qt5:
-        from PyQt5.QtCore import QSettings
-    settings = QSettings('l-koehler', 'untis-py')
+if args.force_cache:
     cache = settings.value('cached_timetable') or []
-    timetable = api.get_cached(cache, starttime)
-    if timetable[0] == "err":
-        print(f"{timetable[1]}: {timetable[2]}")
-        exit(1)
-    timetable = timetable[1]
+    timetable = api.get_cached(cache, starttime).table
 else:
     session = api.API(credentials, [])
     if session.error_state != None:
         print(f"Failed to login: {session.error_state}")
         exit(1)
-    timetable = session.get_table(starttime, endtime)[1]
+    timetable = session.get_table(starttime, endtime).table
 
 # total mess, but transforms the API response into a nice-looking table
 """
@@ -112,7 +99,7 @@ for hour in timetable:
         for period_index in range(len(day)):
             period = sorted(day)[period_index]
             period_str = f" {period[0]} ({period[1]}) ".ljust(longest_entry)
-            if use_color:
+            if not args.no_color:
                 if period[3] == "red":
                     period_str = colors.red + period_str + colors.reset
                 elif period[3] == "orange":
@@ -131,7 +118,7 @@ weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", 
 index = 0
 for day in [day for day in final_response if day != ""]:
     day_as_ls = day.split('\n')
-    if index == date.today().weekday() and use_color:
+    if index == date.today().weekday() and not args.no_color:
         default_top = (f"═ {colors.green}{weekdays[index]}{colors.reset} ").ljust(longest_entry+len(colors.green+colors.reset), '═')
     else:
         default_top = (f"═ {weekdays[index]} ").ljust(longest_entry, '═')

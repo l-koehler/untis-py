@@ -5,8 +5,8 @@ def get_cached(cache, starttime):
     timetable = None
     for cache_entry in cache:
         if cache_entry[0] == starttime:
-            return [True, cache_entry[1], starttime]
-    return ["err", "Reading Timetable failed", f"Week not cached, but cache-only mode active!"]
+            return API_Response(cache_entry[1], True, cache_entry[0])
+    raise CacheMiss("Week not cached, but cache-only mode active!")
 
 def school_search(partial_name):
     # return: [display name, server URL]
@@ -48,7 +48,42 @@ class SerPeriod:
                 self.room_str += f" (originally in {periodObject.original_rooms[0].name})"
         except IndexError:
             self.room_str = "Unknown"
+            
+    # Consider all SerPeriods equal (for checking if a redraw is needed)
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return True
+        else:
+            return False
 
+"""
+API Response object, contains the timetable and some extra info
+Implements __eq__ to check if the responses would be _visually_ any different when rendered
+"""
+class API_Response:
+    def __init__(self, table, is_cached, starttime):
+        self.table = table
+        self.is_cached = is_cached
+        self.starttime = starttime
+        
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.table == other.table
+        else:
+            return False
+# these can be raised instead of returning a response
+class CacheMiss(Exception):
+    """Raise when cache forced but no entry present"""
+    pass
+class InvalidDate(Exception):
+    """like webuntis.errors.DateNotAllowed"""
+    pass
+class ServerReplError(Exception):
+    """Reading timetable failed, server replied with {message}"""
+    pass
+class APIReplError(Exception):
+    """Like above, but for the App API"""
+    pass
 """
 This part combines the two untis APIs to get a usable timetable
 It also deals with caching logic and some reformatting
@@ -93,7 +128,7 @@ class API:
         if no_cache == False:
             for cache_entry in self.cache:
                 if cache_entry[0] == starttime:
-                    return [True, cache_entry[1], cache_entry[0]]
+                    return API_Response(cache_entry[1], True, cache_entry[0])
         # didnt load, ask the server
         try:
             timetable = self.session.my_timetable(
@@ -101,15 +136,15 @@ class API:
             )
             timetable = timetable.to_table()
         except webuntis.errors.DateNotAllowed as err:
-            return ["err", "Reading Timetable failed", "Date not allowed! (is it within a single school year?)"]
+            raise InvalidDate("Date not allowed! (is it within a single school year?)")
         except Exception as err:
-            return ["err", "Reading Timetable failed", f"Server replied with error: \"{err}\"!"]
+            raise ServerReplError(f"Server replied with error: \"{err}\"!")
         if "error" in timetable:
-            return ["err", "Unknown Error", f"Server replied with error: \"{err}\"!"]
+            raise ServerReplError(f"Server replied with error: \"{err}\"!")
 
         exam_table = self.app_api.getExams(starttime, endtime)
         if "error" in exam_table:
-            return ["err", "Unknown App API Error", f"Server replied with error: \"{err}\"!"]
+            raise APIReplError(f"App API replied with error: \"{err}\"!")
         exam_table = exam_table["result"]["exams"]
         
         ret = []
@@ -185,7 +220,7 @@ class API:
         """
         self.cache = [i for i in self.cache if i[0] != starttime]
         self.cache.append([starttime, ret])
-        return [False, ret, starttime]
+        return API_Response(ret, False, starttime)
 
 """
 This part deals with the undocumented mobile API.

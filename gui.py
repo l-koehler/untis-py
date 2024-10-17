@@ -340,6 +340,13 @@ class MainWindow(QMainWindow):
         if not self.week_is_cached:
             self.verticalLayout.removeWidget(self.cache_warning[1])
             self.resize(self.width(), self.cache_warning[0])
+        
+        if self.data == self.last_drawn_data:
+            print("skipping")
+            return
+        else:
+            print("drawing")
+            self.last_drawn_data = self.data
 
         for row in range(len(self.data)):
             for col in range(len(self.data[row])):
@@ -434,49 +441,49 @@ class MainWindow(QMainWindow):
         if not (replace_cache or skip_cache):
             self.week_is_cached = True
             # quickly load some cache data
-            self.data = api.get_cached(self.ref_cache, monday)
-            if self.force_cache:
-                if self.data != [] and self.data[0] == "err":
+            api_response = None
+            try:
+                api_response = api.get_cached(self.ref_cache, monday)
+                self.data = api_response.table
+                self.draw_week()
+            except Exception as e:
+                if self.force_cache:
                     if not silent:
                         QMessageBox.critical(
                             self,
-                            self.data[1],
-                            self.data[2]
+                            "Error loading Timetable!",
+                            f"{e}"
                         )
                     return
-                self.data = self.data[1]
-                self.draw_week()
-                return
-            if self.data != [] and self.data[0] != "err":
-                self.data = self.data[1]
-                self.draw_week()
+                
         # properly fetch data
         if replace_cache:
-            self.data = self.session.get_table(monday, friday, (replace_cache or skip_cache))
-            if self.data != [] and self.data[0] == "err":
-                if not silent:
-                    QMessageBox.critical(
-                        self,
-                        self.data[1],
-                        self.data[2]
-                    )
+            try:
+                api_response = self.session.get_table(monday, friday, (replace_cache or skip_cache))
+                self.week_is_cached = api_response.is_cached
+                self.data = api_response.table
                 return
-            self.week_is_cached = self.data[0]
-            self.data = self.data[1]
-            return
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    "Error updating Cache!",
+                    f"{e}"
+                )
+            
 
         def cache_refresh(parent, monday, friday):
-            data = parent.session.get_table(monday, friday, True)
-            if data[0] == "err":
-                parent.err_data = data
-            else:
-                parent.week_is_cached = data[0]
-                parent.data = data[1]
-                parent.tr_data_mon = data[2]
-            parent.redraw_trip = True
+            try:
+                api_response = parent.session.get_table(monday, friday, True)
+                parent.week_is_cached = api_response.is_cached
+                parent.data = api_response.table
+                parent.tr_data_mon = api_response.starttime
+            except Exception as e:
+                parent.err_data = f"{e}"
+            finally:
+                parent.redraw_trip = True
         
-        # if our results were from cache, asynchronously refresh that
-        if (self.week_is_cached and not self.force_cache and not replace_cache):
+        # if our results were from cache, asynchronously refresh that (only if already logged in)
+        if (self.week_is_cached and not self.force_cache and not replace_cache and self.session != None):
             # async start a thread with api.get_table
             api_thread = threading.Thread(target=cache_refresh, args = (self, monday, friday,))
             api_thread.start()
@@ -502,14 +509,13 @@ class MainWindow(QMainWindow):
     def test_trip_redraw(self):
         if self.redraw_trip != False:
             self.redraw_trip = False
-            if self.err_data != []:
+            if self.err_data != None:
                 QMessageBox.critical(
                     self,
-                    self.err_data[1],
-                    self.err_data[2]
+                    "Error updating Timetable!",
+                    self.err_data
                 )
-                self.err_data = []
-                return
+                self.err_data = None
             # check that we didn't race the thread and are still in the same week as the data
             selected_day = self.date_edit.date().toPyDate()
             week_number = selected_day.isocalendar()[1]
@@ -559,23 +565,23 @@ class MainWindow(QMainWindow):
         credentials = [parent.server, parent.school, parent.user, parent.password]
         if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
             # this part can take forever in theory
+            print("a")
             parent.session = api.API(credentials, parent.ref_cache)
+            print("b")
 
         # trip in any case, to ensure the fairly frequent login timer doesn't run forever
         parent.session_trip = True
 
-    def __init__(self):
+    def __init__(self, args):
         super().__init__()
         self.settings = QSettings('l-koehler', 'untis-py')
         self.is_interactive = False
         self.redraw_trip = False # tripped by thread whenever the data was asynchronously refreshed
         self.redraw_timer = QTimer()
         self.redraw_timer.timeout.connect(self.test_trip_redraw)
-        self.redraw_timer.start(500) # twice a second
         self.session_trip = False
         self.session_timer = QTimer()
         self.session_timer.timeout.connect(self.login_thread)
-        self.session_timer.start(100) # ten times a second, but deleted after use
         
         self.load_settings('--credentials' in sys.argv) # don't overwrite credentials true/false
         
@@ -617,10 +623,11 @@ class MainWindow(QMainWindow):
         self.force_cache = False
         self.cache_warning = None
         self.data = None
+        self.last_drawn_data = None
         self.tr_data_mon = None
         self.session = None
         self.week_is_cached = False
-        self.err_data = []
+        self.err_data = None
         self.show()
         
         # try loading cached data to display at-least-something during login/fetch (unless that'll happen anyways)
@@ -635,6 +642,8 @@ class MainWindow(QMainWindow):
         
         # if the credentials are already all set, log in asynchronously
         self.session_thread = threading.Thread(target=self.login_thread_defer)
+        self.redraw_timer.start(500)
+        self.session_timer.start(100)
         self.session_thread.start()
 
     def closeEvent(self, event):
