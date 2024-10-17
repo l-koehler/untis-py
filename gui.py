@@ -2,21 +2,26 @@ import sys, os, api, re, threading
 import datetime as dt
 from dateutil.relativedelta import relativedelta, FR, MO
 
-use_qt5 = True
-if not "--qt5" in sys.argv:
+use_qt5 = None
+try:
+    if "--force-qt5" in sys.argv:
+        # skip trying to import qt6
+        raise(ImportError)
+    from PyQt6.QtCore import Qt, QDate, QSettings, pyqtSignal, QTimer
+    from PyQt6 import QtCore
+    from PyQt6.QtGui import QShortcut, QKeySequence, QIcon, QBrush, QColor
+    from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QSizePolicy, QSpacerItem, QToolButton, QDateEdit, QTableWidget, QStatusBar, QTabWidget, QComboBox
     use_qt5 = False
-    try:
-        from PyQt6.QtCore import Qt, QDate, QSettings, pyqtSignal, QTimer
-        from PyQt6 import QtCore
-        from PyQt6.QtGui import QShortcut, QKeySequence, QIcon, QBrush, QColor
-        from PyQt6.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QSizePolicy, QSpacerItem, QToolButton, QDateEdit, QTableWidget, QStatusBar, QTabWidget, QComboBox
-    except ImportError:
+except ImportError:
+    if not "--force-qt6" in sys.argv:
+        from PyQt5.QtCore import Qt, QDate, QSettings, pyqtSignal, QTimer
+        from PyQt5 import QtCore
+        from PyQt5.QtGui import QIcon, QBrush, QColor, QKeySequence
+        from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QShortcut, QSizePolicy, QSpacerItem, QToolButton, QDateEdit, QTableWidget, QStatusBar,  QTabWidget, QComboBox
         use_qt5 = True
-if use_qt5:
-    from PyQt5.QtCore import Qt, QDate, QSettings, pyqtSignal, QTimer
-    from PyQt5 import QtCore
-    from PyQt5.QtGui import QIcon, QBrush, QColor, QKeySequence
-    from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout, QWidget, QPushButton, QDialog, QFrame, QAbstractItemView, QMessageBox, QTableWidgetItem, QShortcut, QSizePolicy, QSpacerItem, QToolButton, QDateEdit, QTableWidget, QStatusBar,  QTabWidget, QComboBox
+    else:
+        print("Could not import PyQt5 or PyQt6. At least one of these is needed.")
+        sys.exit(0)
 
 class QFrame_click(QFrame):
     clicked = pyqtSignal()
@@ -432,12 +437,6 @@ class MainWindow(QMainWindow):
         monday = dt.date.fromisocalendar(selected_day.year, week_number, 1)
         friday = dt.date.fromisocalendar(selected_day.year, week_number, 5)
 
-        if "--fake-data" in sys.argv:
-            self.data = [[[['mo 1', 'regular lesson', '', 'white', None]], [['tu 1', 'regular lesson', '', 'white', None]]], [[['mo 2', 'single, red', '', 'red', None]], [['tu 2', 'single, orange', '', 'orange', None]]], [[['mo 3', 'half, white', '', 'white', None], ['mo 3', 'second half', '', 'white', None]], [['hello', 'half, red', '', 'red', None], ['world', 'other half', '', 'white', None]]]]
-            self.week_is_cached = False
-            self.draw_week()
-            return
-
         if not (replace_cache or skip_cache):
             self.week_is_cached = True
             # quickly load some cache data
@@ -528,7 +527,7 @@ class MainWindow(QMainWindow):
             return
 
         credentials = [self.server, self.school, self.user, self.password]
-        if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
+        if None not in credentials and '' not in credentials and not self.args.force_cache:
             if self.session.error_state == None: # if login successful (already tried pre-trip)
                 self.fetch_week(skip_cache=True)
             else:
@@ -540,12 +539,11 @@ class MainWindow(QMainWindow):
                 )
                 self.force_cache = (box.exec() == QMessageBox.StandardButton.Yes)
                 self.session = None
-        elif '--fake-data' in sys.argv:
-            self.fetch_week()
-        elif '--force-cache' in sys.argv:
+        elif self.args.force_cache:
             self.force_cache = True
             self.session = None
         else:
+            # invalid credentials
             self.session = None
         
         if self.force_cache:
@@ -563,17 +561,16 @@ class MainWindow(QMainWindow):
 
     def login_thread_defer(parent):
         credentials = [parent.server, parent.school, parent.user, parent.password]
-        if None not in credentials and '' not in credentials and '--fake-data' not in sys.argv and '--force-cache' not in sys.argv:
+        if None not in credentials and '' not in credentials and not parent.args.force_cache:
             # this part can take forever in theory
-            print("a")
             parent.session = api.API(credentials, parent.ref_cache)
-            print("b")
 
         # trip in any case, to ensure the fairly frequent login timer doesn't run forever
         parent.session_trip = True
 
     def __init__(self, args):
         super().__init__()
+        self.args = args
         self.settings = QSettings('l-koehler', 'untis-py')
         self.is_interactive = False
         self.redraw_trip = False # tripped by thread whenever the data was asynchronously refreshed
@@ -583,9 +580,14 @@ class MainWindow(QMainWindow):
         self.session_timer = QTimer()
         self.session_timer.timeout.connect(self.login_thread)
         
-        self.load_settings('--credentials' in sys.argv) # don't overwrite credentials true/false
+        # don't overwrite argument credentials
+        if args.credentials == None:
+            self.load_settings(no_set_credentials=False)
+        else:
+            self.server, self.school, self.user, self.password = args.credentials
+            self.load_settings(no_set_credentials=True)
         
-        if "--delete-settings" in sys.argv:
+        if args.delete_settings:
             self.delete_settings()
         if getattr(sys, 'frozen', False):
             ico_path = os.path.join(sys._MEIPASS, "icon.ico")
@@ -599,16 +601,7 @@ class MainWindow(QMainWindow):
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('l-koehler.untis-py')
         # set application icon
         self.setWindowIcon(QIcon(ico_path))
-        for index in range(len(sys.argv)):
-            if sys.argv[index] == '--credentials':
-                if len(sys.argv) < index+5:
-                    print(f"--credentials takes 4 arguments, {len(sys.argv)-index-1} were passed!")
-                    print("use --credentials <server> <school> <username> <password>")
-                    exit(1)
-                self.server   = sys.argv[index+1]
-                self.school   = sys.argv[index+2]
-                self.user     = sys.argv[index+3]
-                self.password = sys.argv[index+4]
+
         self.date_edit.setDate(QDate.currentDate())
         self.shortcut_current_week = QShortcut(QKeySequence('Down'), self)
         self.shortcut_current_week.activated.connect(self.current_week)
@@ -631,7 +624,7 @@ class MainWindow(QMainWindow):
         self.show()
         
         # try loading cached data to display at-least-something during login/fetch (unless that'll happen anyways)
-        if not '--force-cache' in sys.argv:
+        if not args.force_cache:
             self.cache_warning = (self.height(), QLabel("Not yet logged in, data might be outdated!"))
             self.verticalLayout.addWidget(self.cache_warning[1])
             # resize to just-enough-to-fit unless it is already big enough
@@ -648,7 +641,7 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         # save the new cache before closing
-        if not "--no-cache" in sys.argv and self.session != None:
+        if not self.args.no_cache and self.session != None:
             self.settings.setValue('cached_timetable', self.session.cache)
         event.accept()
         # cause a AssertionError to kill the login thread
