@@ -292,6 +292,7 @@ class MainWindow(QMainWindow):
     current_date = QDate.currentDate()
     def date_changed(self):
         new_date = self.date_edit.date()
+        self.setFocus()
         if self.current_date.weekNumber() != new_date.weekNumber():
             self.fetch_week()
         self.current_date = new_date
@@ -498,6 +499,7 @@ class MainWindow(QMainWindow):
 
     def reload_all(self):
         self.ref_cache = []
+        self.last_drawn_data = None
         # delete all rows and draw empty table to make the reload visible
         self.timetable.setRowCount(0)
         self.timetable.repaint()
