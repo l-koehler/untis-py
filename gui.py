@@ -346,11 +346,23 @@ class MainWindow(QMainWindow):
             self.verticalLayout.removeWidget(self.cache_warning[1])
             self.resize(self.width(), self.cache_warning[0])
         
+        # highlight the current day, if it is within the week
+        current_date = QDate.currentDate()
+        default_brush = QTableWidgetItem().background()
+        for i in range(5):
+            ref_tm = QDate(monday).addDays(i)
+            if (monday == current_date.addDays((i)*-1)):
+                brush = QBrush(QColor(0x30, 0xA5, 0x30))
+                self.timetable.horizontalHeaderItem(i).setBackground(brush)
+            else:
+                self.timetable.horizontalHeaderItem(i).setBackground(default_brush)
+            # https://doc.qt.io/qt-6/qdate.html#toString-1
+            self.timetable.horizontalHeaderItem(i).setText(ref_tm.toString("dddd (d.M)"))
+        
+        # don't redraw the table when nothing changed
         if self.data == self.last_drawn_data:
-            print("skipping")
             return
         else:
-            print("drawing")
             self.last_drawn_data = self.data
 
         for row in range(len(self.data)):
@@ -417,18 +429,6 @@ class MainWindow(QMainWindow):
                 
                 self.timetable.setCellWidget(row, col, widget)
                 
-        # highlight the current day, if it is within the week
-        current_date = QDate.currentDate()
-        default_brush = QTableWidgetItem().background()
-        for i in range(5):
-            ref_tm = QDate(monday).addDays(i)
-            if (monday == current_date.addDays((i)*-1)):
-                brush = QBrush(QColor(0x30, 0xA5, 0x30))
-                self.timetable.horizontalHeaderItem(i).setBackground(brush)
-            else:
-                self.timetable.horizontalHeaderItem(i).setBackground(default_brush)
-            # https://doc.qt.io/qt-6/qdate.html#toString-1
-            self.timetable.horizontalHeaderItem(i).setText(ref_tm.toString("dddd (d.M)"))
         self.is_interactive = True
 
     def fetch_week(self, replace_cache=False, silent=False, skip_cache=False):

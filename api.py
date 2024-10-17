@@ -66,11 +66,6 @@ class API_Response:
         self.is_cached = is_cached
         self.starttime = starttime
         
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.table == other.table
-        else:
-            return False
 # these can be raised instead of returning a response
 class CacheMiss(Exception):
     """Raise when cache forced but no entry present"""
@@ -212,6 +207,7 @@ class API:
                             color = "white"
                         period_specific_item = [subject.name, room_str, notes_str, color, SerPeriod(period)]
                         day_ret.append(period_specific_item)
+                    day_ret.sort()
                     blob_ret[day_n] = day_ret
                 ret.append(blob_ret)
         """
