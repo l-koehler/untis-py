@@ -39,7 +39,7 @@ endtime = starttime + relativedelta(weekday=FR)
 
 qt_ver = None
 settings = None
-if args.credentials == None or not args.force_cache:
+if args.credentials == None or not args.force_cache or args.delete_settings:
     if args.force_qt5:
         from PyQt5.QtCore import QSettings
     elif args.force_qt6:
@@ -50,6 +50,9 @@ if args.credentials == None or not args.force_cache:
         except ImportError:
             from PyQt5.QtCore import QSettings
     settings = QSettings('l-koehler', 'untis-py')
+
+if args.delete_settings:
+    settings.clear()
 
 # server, school, username, password
 credentials = [None, None, None, None]

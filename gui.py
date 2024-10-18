@@ -352,7 +352,7 @@ class MainWindow(QMainWindow):
         default_brush = QTableWidgetItem().background()
         for i in range(5):
             ref_tm = QDate(monday).addDays(i)
-            if (monday == current_date.addDays((i)*-1)):
+            if monday == current_date.addDays((i)*-1) and not self.args.no_color:
                 brush = QBrush(QColor(0x30, 0xA5, 0x30))
                 self.timetable.horizontalHeaderItem(i).setBackground(brush)
             else:
@@ -399,7 +399,7 @@ class MainWindow(QMainWindow):
                     lesson_widget.setTextFormat(Qt.TextFormat.RichText)
                     richtext = f"<b>{lesson[0]}</b><br>{lesson[1]}"
                     stylesheet = f"padding-right:4px; padding-left:4px; margin-top: 4px; margin-bottom:4px; border-radius:4px;"
-                    if lesson[3] != "white":
+                    if lesson[3] != "white" and not self.args.no_color:
                          stylesheet+=f"background-color:{lesson[3]};"
                     if lesson[2] != '':
                         richtext += f"<br><small>{lesson[2]}</small>"
@@ -604,7 +604,7 @@ class MainWindow(QMainWindow):
         # set application icon
         self.setWindowIcon(QIcon(ico_path))
 
-        self.date_edit.setDate(QDate.currentDate())
+        self.date_edit.setDate(QDate.currentDate().addDays(args.offset*7))
         self.shortcut_current_week = QShortcut(QKeySequence('Down'), self)
         self.shortcut_current_week.activated.connect(self.current_week)
         self.timetable.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)

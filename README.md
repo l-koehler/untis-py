@@ -47,29 +47,24 @@ part of the login website.
 The username and password are just whatever you use for the website.  
 
 ### Arguments
-* Use `--qt5` to force the program to use PyQt5, it will otherwise  
-  use PyQt6 if available.  
-* Use `--fake-data` to test the program without connecting to WebUntis.  
-  (not when using `--text-only`, only with the Qt UI).  
-* Use `--delete-settings` to forget the stored login data and cache.  
-* Use `--no-cache` to (only this time) skip loading/saving cache.  
-  This does not disable caching entirely, just the loading/saving!  
-* Use `--force-cache` to enter cache-only mode. This will prevent  
-  the program from connecting to WebUntis entirely.  
-  This is also the __only way of viewing cached data in text-only mode__.
-* If `--credentials <server> <school> <username> <password>` is  
-  passed to the program, QSettings will not be used.  
-  In combination with `--text-only`, this allows for usage of the program  
-  without installing PyQt.  
-  School like in the URL parameter, server only subdomain.webuntis.com  
+```
+usage: main.py [-h] [-t] [--force-qt5 | --force-qt6] [--delete-settings] [--no-cache | --force-cache] [-o OFFSET] [--no-color]
+               [--credentials SERVER SCHOOL USERNAME PASSWORD]
 
-### Terminal-only arguments
-* Use `-t` or `--text-only` to not use an UI,  
-  instead outputting a formatted table to the console.  
-  This will also disable using the cache for timetable data.  
-* Use `--offset <weeks>` or `-o<weeks>` to get another week.  
-  The offset can be negative.  
-* Use `--no-color` to disable color codes.  
+options:
+  -h, --help            show this help message and exit
+  -t, --text-only       output to terminal instead of UI
+  --force-qt5           only use pyqt5, fail even if pyqt6 is available
+  --force-qt6           only use pyqt6, fail even if pyqt5 is available
+  --delete-settings     delete settings (cache and credentials) before start
+  --no-cache            skip reading/writing cache data
+  --force-cache         never connect to webuntis, only use cache
+  -o OFFSET, --offset OFFSET
+                        offset the initially displayed week by OFFSET (positive or negative)
+  --no-color            don't highlight special lessons (text-only mode: disable color codes)
+  --credentials SERVER SCHOOL USERNAME PASSWORD
+                        Temporary credentials that won't be saved. When used with text-only mode, pyqt is not needed.
+```
 
 ### Other notes
 If you changed the `icon.svg` file, regenerate the `.ico`/`.png` files:  
