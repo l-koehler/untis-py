@@ -115,10 +115,10 @@ fi
 
 # register untis command
 echo "#!/bin/sh
-PREV_DIR=$(pwd)
+PREV_DIR=\$(pwd)
 cd $E_DIR
-python3 ./main.py
-cd $PREV_DIR" > "$B_DIR/untis"
+python3 ./main.py \"\$@\"
+cd \$PREV_DIR" > "$B_DIR/untis"
 chmod +x "$B_DIR/untis"
 
 echo "Installation completed without errors!"
