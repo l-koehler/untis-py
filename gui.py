@@ -362,6 +362,7 @@ class MainWindow(QMainWindow):
         
         # don't redraw the table when nothing changed
         if self.data == self.last_drawn_data:
+            self.is_interactive = True
             return
         else:
             self.last_drawn_data = self.data
