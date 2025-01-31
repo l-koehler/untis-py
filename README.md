@@ -65,6 +65,10 @@ options:
   --credentials SERVER SCHOOL USERNAME PASSWORD
                         Temporary credentials that won't be saved. When used with text-only mode, pyqt is not needed.
 ```
+The `--credentials` flag takes 4 arguments:  
+* Server: Something like `subdomain.webuntis.com`, same as for the website  
+* School: From the WebUntis `?school` parameter, for example `HS+Some+School`. Used in the website login page URL.  
+* Username and Password are the same as for the website.  
 
 ### Other notes
 If you changed the `icon.svg` file, regenerate the `.ico`/`.png` files:  
