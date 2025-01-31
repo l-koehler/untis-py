@@ -120,7 +120,6 @@ for hour in timetable:
                     exec(f"color_dyn = colors.{period[3]}")
                     period_str = color_dyn + period_str + colors.reset
                 elif period[3] != "white":
-                    print(period[3])
                     period_str = colors.cyan + period_str + colors.reset
                 else:
                     period_str = colors.skip + period_str + colors.reset
