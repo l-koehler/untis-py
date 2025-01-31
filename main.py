@@ -89,11 +89,11 @@ else:
 
 # total mess, but transforms the API response into a nice-looking table
 """
-| Monday                  |
-|-------------------------|
-| GGK (004)               |
-| GGK (002  -> 004)       |
-| GGK (003) | EEEPY (E04) |
+| Monday                          |
+|---------------------------------|
+| GGK (004)         |             |
+| GGK (002  -> 004) |             |
+| GGK (003)         | EEEPY (E04) |
 
 """
 
@@ -133,7 +133,7 @@ weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", 
 index = 0
 for day in [day for day in final_response if day != ""]:
     day_as_ls = day.split('\n')
-    if index == date.today().weekday() and not args.no_color:
+    if index == date.today().weekday() and not args.no_color and not args.offset:
         default_top = (f"═ {colors.green}{weekdays[index]}{colors.reset} ").ljust(longest_entry+len(colors.green+colors.reset), '═')
     else:
         default_top = (f"═ {weekdays[index]} ").ljust(longest_entry, '═')
