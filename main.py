@@ -119,6 +119,8 @@ for hour in timetable:
                     period_str = colors.red + period_str + colors.reset
                 elif period[3] == "orange":
                     period_str = colors.yellow + period_str + colors.reset
+                elif period[3] == "blue":
+                    period_str = colors.blue + period_str + colors.reset                            
                 elif period[3] != "white":
                     period_str = colors.cyan + period_str + colors.reset
                 else:
