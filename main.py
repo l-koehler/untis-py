@@ -32,6 +32,7 @@ class colors:
     yellow = "\033[93m"
     green  = "\033[92m"
     red    = "\033[91m"
+    bold   = "\033[1m"
     reset  = "\033[0m"
 starttime = date.today() + relativedelta(weekday=MO(-1))
 starttime += relativedelta(weeks=args.offset)
@@ -64,6 +65,16 @@ if args.credentials == None:
 else:
     credentials = args.credentials
 
+def html_prettyprint(text, cmode):
+    if cmode == 'err':
+        text = colors.red + text
+    elif cmode == 'warn':
+        text = colors.yellow + text
+    text = text.replace('<br>', '\n')
+    text = text.replace('<b>', colors.bold)
+    text = text.replace('</b>', colors.reset)
+    print(text)
+
 timetable = None
 if args.force_cache:
     cache = settings.value('cached_timetable') or []
@@ -71,8 +82,9 @@ if args.force_cache:
 else:
     session = api.API(credentials, [])
     if session.error_state != None:
-        print(f"Failed to login: {session.error_state}")
-        exit(1)
+        html_prettyprint(session.error_state[1], session.error_state[0])
+        if session.error_state[0] == 'err':
+            exit(1)
     timetable = session.get_table(starttime, endtime).table
 
 # total mess, but transforms the API response into a nice-looking table
@@ -133,6 +145,8 @@ for day in [day for day in final_response if day != ""]:
                     index_split_lsn.append(char_i)
     for i in index_split_lsn:
         default_top = default_top[:i] + '╤' + default_top[i+1:].ljust(longest_entry, '═')
+    # dealing with extra invisible text would be a mess, just replace the weekday with a formatted version
+    default_top = default_top.replace(weekdays[index], colors.bold + weekdays[index] + colors.reset)
     print(f"╔{default_top}╗")
     for line in day_as_ls:
         if line != "":

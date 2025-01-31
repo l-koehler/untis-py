@@ -101,13 +101,10 @@ class API:
         except webuntis.errors.RemoteError as e:
             self.session = None
             self.error_state = ["err", f"<b>Error:</b> {e}<br>Check credentials!"]
-            print(self.error_state[1])
             return
         except Exception as e:
             self.session = None
             self.error_state = ["err", f"<b>Error:</b> {e}"]
-            # display in terminal-only mode
-            print(self.error_state[1])
             return
         
         self.app_api = App_API(credentials)
@@ -115,7 +112,6 @@ class API:
             self.app_api.login()
         except Exception as e:
             self.error_state = ["warn", f"<b>Warning:</b> App API Error encountered, App API disabled. Exams will not be displayed!<br><b>API Error:</b> {e}"]
-            print(self.error_state[1])
             self.app_api = App_API_Stub()
             return
 
