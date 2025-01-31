@@ -100,20 +100,23 @@ class API:
             self.session = new_session.login()
         except webuntis.errors.RemoteError as e:
             self.session = None
-            self.error_state = f"Error: \"{e}\". Check credentials!"
-            print(self.error_state)
+            self.error_state = ["err", f"<b>Error:</b> {e}<br>Check credentials!"]
+            print(self.error_state[1])
             return
         except Exception as e:
             self.session = None
-            self.error_state = f"Error: \"{e}\""
-            print(self.error_state)
+            self.error_state = ["err", f"<b>Error:</b> {e}"]
+            # display in terminal-only mode
+            print(self.error_state[1])
             return
+        
         self.app_api = App_API(credentials)
         try:
             self.app_api.login()
         except Exception as e:
-            self.error_state = f"App API Error: \"{e}\""
-            print(self.error_state)
+            self.error_state = ["warn", f"<b>Warning:</b> App API Error encountered, App API disabled. Exams will not be displayed!<br><b>API Error:</b> {e}"]
+            print(self.error_state[1])
+            self.app_api = App_API_Stub()
             return
 
 
@@ -319,3 +322,7 @@ class App_API:
         }
         response = self.genericAuthenticatedRequest("getTimetable2017", params)
         return response
+
+class App_API_Stub:
+    def getExams(self, a, b):
+        return {"result": {"exams": []}}

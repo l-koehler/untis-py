@@ -533,15 +533,24 @@ class MainWindow(QMainWindow):
         if None not in credentials and '' not in credentials and not self.args.force_cache:
             if self.session.error_state == None: # if login successful (already tried pre-trip)
                 self.fetch_week(skip_cache=True)
-            else:
+            elif self.session.error_state[0] == "err":
                 box = QMessageBox (
                     QMessageBox.Icon.Critical,
                     "Login Failed!",
-                    f"<h3>Login Failed!</h3><b>Details:</b><br>{self.session.error_state}<h4>Use cached data only?</h4>",
+                    f"<h3>Login Failed!</h3><b>Details:</b><br>{self.session.error_state[1]}<h4>Use cached data only?</h4>",
                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
                 )
                 self.force_cache = (box.exec() == QMessageBox.StandardButton.Yes)
                 self.session = None
+            else:
+                # just warn about the app api, it's replaced with a stub at this point anyways
+                box = QMessageBox (
+                    QMessageBox.Icon.Warning,
+                    "Warning: App API Error!",
+                    f"<h3>App Login Failed!</h3>{self.session.error_state[1]}",
+                    QMessageBox.StandardButton.Ok
+                )
+                box.exec()
         elif self.args.force_cache:
             self.force_cache = True
             self.session = None
