@@ -138,7 +138,7 @@ class API:
 
         exam_table = self.app_api.getExams(starttime, endtime)
         if "error" in exam_table:
-            raise APIReplError(f"App API replied with error: \"{err}\"!")
+            raise APIReplError(f"App API replied with error: \"{exam_table['error']}\"!")
         exam_table = exam_table["result"]["exams"]
         
         ret = []
@@ -313,7 +313,7 @@ class App_API:
             "endDate": friday.isoformat(),
             # the following parameters are commented as "unknown usage" on BetterUntis
             "masterDataTimestamp": 0,
-            "timetableTimestamp": 0,
+            "timetableTimestamp" : 0,
             "timetableTimestamps": []
         }
         response = self.genericAuthenticatedRequest("getTimetable2017", params)

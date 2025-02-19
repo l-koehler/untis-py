@@ -297,6 +297,27 @@ class MainWindow(QMainWindow):
             self.fetch_week()
         self.current_date = new_date
 
+    def cache_warn_helper(self, new_text):
+        if self.cache_warning[1].text() != "" and new_text != "":
+            # change text
+            self.cache_warning[1].setText(new_text)
+        elif self.cache_warning[1].text() != "" and new_text == "":
+            # remove text
+            self.cache_warning[1].setText("")
+            self.cache_warning[1].hide()
+            #self.verticalLayout.removeChildWidget(self.cache_warning[1])
+            if not self.isFullScreen():
+                self.resize(self.width(), self.cache_warning[0])
+        elif self.cache_warning[1].text() == "" and new_text != "":
+            # add text
+            self.cache_warning[1].setText(new_text)
+            self.cache_warning[1].show()
+            self.cache_warning[0] = self.height()
+            #self.verticalLayout.addChildWidget(self.cache_warning[1])
+            if not self.isFullScreen():
+                self.resize(self.width(), max(self.height(), 698))
+        # fall-through is "" to "", no action needed
+
     def load_settings(self, no_set_credentials):
         if not no_set_credentials:
             self.server   = self.settings.value('server')
@@ -344,8 +365,7 @@ class MainWindow(QMainWindow):
         self.timetable.setRowCount(len(self.data))
 
         if not self.week_is_cached:
-            self.verticalLayout.removeWidget(self.cache_warning[1])
-            self.resize(self.width(), self.cache_warning[0])
+            self.cache_warn_helper("")
         
         # highlight the current day, if it is within the week
         current_date = QDate.currentDate()
@@ -551,6 +571,8 @@ class MainWindow(QMainWindow):
                     QMessageBox.StandardButton.Ok
                 )
                 box.exec()
+                # :3
+                self.cache_warn_helper("<span style='color:orange;'>App API failed, exams missing!</span>")
         elif self.args.force_cache:
             self.force_cache = True
             self.session = None
@@ -559,13 +581,7 @@ class MainWindow(QMainWindow):
             self.session = None
         
         if self.force_cache:
-            if (self.cache_warning):
-                self.verticalLayout.removeWidget(self.cache_warning[1])
-                self.cache_warning = None
-            cache_warning = QLabel("<span style='color:#F44;'>Cache-only mode active, restart to disable!</span>")
-            self.verticalLayout.addWidget(cache_warning)
-            # resize to just-enough-to-fit unless it is already big enough
-            self.resize(self.width(), max(self.height(), 698))
+            self.cache_warn_helper("<span style='color:#F44;'>Cache-only mode active, restart to disable!</span>")
             self.fetch_week()
         
         # stop trying this, its useless
@@ -626,7 +642,8 @@ class MainWindow(QMainWindow):
         self.reload_btn.pressed.connect(self.reload_all)
         self.timetable.setHorizontalHeaderLabels([""]*5)
         self.force_cache = False
-        self.cache_warning = None
+        self.cache_warning = [0, QLabel()]
+        self.verticalLayout.addWidget(self.cache_warning[1], 0, Qt.AlignmentFlag.AlignBottom)
         self.data = None
         self.last_drawn_data = None
         self.tr_data_mon = None
@@ -637,10 +654,8 @@ class MainWindow(QMainWindow):
         
         # try loading cached data to display at-least-something during login/fetch (unless that'll happen anyways)
         if not args.force_cache:
-            self.cache_warning = (self.height(), QLabel("Not yet logged in, data might be outdated!"))
-            self.verticalLayout.addWidget(self.cache_warning[1])
-            # resize to just-enough-to-fit unless it is already big enough
-            self.resize(self.width(), max(self.height(), 698))
+            self.cache_warn_helper("Not yet logged in, data might be outdated!")
+            
             self.force_cache = True
             self.fetch_week(silent=True)
             self.force_cache = False
