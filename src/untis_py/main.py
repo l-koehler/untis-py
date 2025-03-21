@@ -1,30 +1,58 @@
 #!/usr/bin/python3
-import sys, api, argparse, time
+import sys, argparse
+from untis_py import api, gui
 from datetime import date
 from dateutil.relativedelta import relativedelta, FR, MO
 
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument("-t", "--text-only", help="output to terminal instead of UI", action="store_true")
+
 force_ver = parser.add_mutually_exclusive_group()
 force_ver.add_argument("--force-qt5", help="only use pyqt5, fail even if pyqt6 is available", action="store_true")
 force_ver.add_argument("--force-qt6", help="only use pyqt6, fail even if pyqt5 is available", action="store_true")
+
 parser.add_argument("--delete-settings", help="delete settings (cache and credentials) before start", action="store_true")
+
 cache_mode = parser.add_mutually_exclusive_group()
 cache_mode.add_argument("--no-cache", help="skip reading/writing cache data", action="store_true")
 cache_mode.add_argument("--force-cache", help="never connect to webuntis, only use cache", action="store_true")
+
 parser.add_argument("-o", "--offset", help="offset the initially displayed week by OFFSET (positive or negative)", type=int, default=0)
 parser.add_argument("--no-color", help="don't highlight special lessons (text-only mode: disable color codes)", action="store_true")
 parser.add_argument("--credentials", nargs=4, metavar=("SERVER","SCHOOL","USERNAME","PASSWORD"), type=str, help="Temporary credentials that won't be saved. When used with text-only mode, pyqt is not needed.", default=None)
+
 args = parser.parse_args()
 
-if not args.text_only:
-    import gui
+
+def main():
+    """
+    main function
+    """
+
+
+    if not args.text_only:
+        gui_entry()
+
+
+def gui_entry():
+    """
+    gui entry point
+    """
     app = gui.QApplication(sys.argv)
     window = gui.MainWindow(args)
     app.exec()
     sys.exit(0)
 
-# text-only mode
+
+
+def term():
+
+    # text-only mode
+    pass
+
+
 class colors:
     blue   = "\033[94m"
     cyan   = "\033[96m"
@@ -35,11 +63,23 @@ class colors:
     bold   = "\033[1m"
     reset  = "\033[0m"
 
+
+def html_prettyprint(text, cmode):
+    if cmode == 'err':
+        text = colors.red + text
+    elif cmode == 'warn':
+        text = colors.yellow + text
+    text = text.replace('<br>', '\n')
+    text = text.replace('<b>', colors.bold)
+    text = text.replace('</b>', colors.reset)
+    print(text)
+
+
+
 starttime = date.today() + relativedelta(weekday=MO(-1))
 starttime += relativedelta(weeks=args.offset)
 endtime = starttime + relativedelta(weekday=FR)
 
-qt_ver = None
 settings = None
 if args.credentials == None or not args.force_cache or args.delete_settings:
     if args.force_qt5:
@@ -51,6 +91,7 @@ if args.credentials == None or not args.force_cache or args.delete_settings:
             from PyQt6.QtCore import QSettings
         except ImportError:
             from PyQt5.QtCore import QSettings
+
     settings = QSettings('l-koehler', 'untis-py')
 
 if args.delete_settings:
@@ -66,15 +107,7 @@ if args.credentials == None:
 else:
     credentials = args.credentials
 
-def html_prettyprint(text, cmode):
-    if cmode == 'err':
-        text = colors.red + text
-    elif cmode == 'warn':
-        text = colors.yellow + text
-    text = text.replace('<br>', '\n')
-    text = text.replace('<b>', colors.bold)
-    text = text.replace('</b>', colors.reset)
-    print(text)
+
 
 timetable = None
 if args.force_cache:

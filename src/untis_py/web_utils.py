@@ -13,6 +13,7 @@ def concat_literal_params(url, params):
             url += f"&{key}={value}"
     return url
 
+
 # cryptic functions for webuntis
 # from https://github.com/sapuseven/betteruntis (GPL3)
 def verify_code(key: bytes, time: int) -> int:
@@ -33,6 +34,7 @@ def verify_code(key: bytes, time: int) -> int:
         t = (t << 8) | l
 
     return (t & 0x7FFFFFFF) % 1000000
+
 
 def create_time_based_code(secret) -> int:
     timestamp = int(time.time() * 1000)

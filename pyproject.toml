@@ -21,3 +21,10 @@ license-files = ["LICEN[CS]E*"]
 [project.urls]
 Homepage = "https://github.com/l-koehler/untis-py"
 Issues = "https://github.com/l-koehler/untis-py/issues"
+
+
+[project.scripts]
+untis-py = "untis_py.main:main"
+
+[project.gui-scripts]
+untis-py-gui = "untis_py.main:gui"

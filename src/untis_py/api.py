@@ -1,4 +1,5 @@
-import webuntis, json, requests, urllib, time, web_utils
+import webuntis, requests, time
+from untis_py import web_utils
 import datetime as dt
 
 def get_cached(cache, starttime):
@@ -31,6 +32,8 @@ Version of "PeriodObject" that doesn't include any session references.
 Used for Lesson Info popups from cache
 """
 class SerPeriod:
+
+
     def __init__(self, periodObject):
         self.activityType = str(periodObject.activityType)
         self.code = str(periodObject.code)
@@ -48,7 +51,8 @@ class SerPeriod:
                 self.room_str += f" (originally in {periodObject.original_rooms[0].name})"
         except IndexError:
             self.room_str = "Unknown"
-            
+
+
     # Consider all SerPeriods equal (for checking if a redraw is needed)
     def __eq__(self, other):
         if isinstance(other, self.__class__):
@@ -65,26 +69,36 @@ class API_Response:
         self.table = table
         self.is_cached = is_cached
         self.starttime = starttime
-        
+
+
 # these can be raised instead of returning a response
 class CacheMiss(Exception):
     """Raise when cache forced but no entry present"""
     pass
+
+
 class InvalidDate(Exception):
     """like webuntis.errors.DateNotAllowed"""
     pass
+
+
 class ServerReplError(Exception):
     """Reading timetable failed, server replied with {message}"""
     pass
+
+
 class APIReplError(Exception):
     """Like above, but for the App API"""
     pass
+
+
 """
 This part combines the two untis APIs to get a usable timetable
 It also deals with caching logic and some reformatting
 """
-
 class API:
+
+
     def __init__(self, credentials, cache):
         self.cache = cache
         self.error_state = None
@@ -129,12 +143,15 @@ class API:
                 start=starttime, end=endtime
             )
             timetable = timetable.to_table()
+
         except webuntis.errors.DateNotAllowed as err:
             raise InvalidDate("Date not allowed! (is it within a single school year?)")
+
         except Exception as err:
             raise ServerReplError(f"Server replied with error: \"{err}\"!")
+
         if "error" in timetable:
-            raise ServerReplError(f"Server replied with error: \"{err}\"!")
+            raise ServerReplError(f"Server replied with error: \"{timetable}\"!")
 
         exam_table = self.app_api.getExams(starttime, endtime)
         if "error" in exam_table:
@@ -217,12 +234,15 @@ class API:
         self.cache.append([starttime, ret])
         return API_Response(ret, False, starttime)
 
+
 """
 This part deals with the undocumented mobile API.
 Some repeated functions were split into web_utils.py.
 Refer to https://github.com/SapuSeven/BetterUntis/wiki/Untis-Mobile-API-Reference
 """
 class App_API:
+
+
     def __init__(self, credentials):
         self.session = requests.Session()
         
@@ -236,10 +256,12 @@ class App_API:
         # "magic values" obtained from BetterUntis
         self.untis_id = "untis-mobile-blackberry-2.7.4"
         self.version = "i5.12.3"
-        
+
+
     def login(self):
         self.getAppSharedSecret()
         self.getUserData()
+
 
     def getAuth(self):
         auth = {
@@ -248,6 +270,7 @@ class App_API:
             "user": self.username
         }
         return auth
+
 
     def getAppSharedSecret(self):
         url_params = {
@@ -268,7 +291,8 @@ class App_API:
         api_url = web_utils.concat_literal_params(self.api_url, url_params)
         data = self.session.post(api_url, json=data)
         self.secret = data.json()["result"]
-        
+
+
     def genericAuthenticatedRequest(self, method, parameters):
         url_params = {
             "school": self.school,
@@ -288,11 +312,13 @@ class App_API:
         data = self.session.post(api_url, json=data)
         return data.json()
 
+
     def getUserData(self):
         response = self.genericAuthenticatedRequest("getUserData2017", {})
         self.user_type = response["result"]["userData"]["elemType"]
         self.user_id =   response["result"]["userData"]["elemId"]
-    
+
+
     def getExams(self, monday, friday):
         params = {
             "id": self.user_id,
@@ -302,6 +328,7 @@ class App_API:
         }
         response = self.genericAuthenticatedRequest("getExams2017", params)
         return response
+
 
     # unused
     # works, but would be a pain to write so we keep using 'webuntis' for this
@@ -318,6 +345,7 @@ class App_API:
         }
         response = self.genericAuthenticatedRequest("getTimetable2017", params)
         return response
+
 
 class App_API_Stub:
     def getExams(self, a, b):
