@@ -4,3 +4,4 @@ __pycache__/
 main.spec
 upx.exe
 .venv/
+.direnv/

@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import sys, api, argparse, time
 from datetime import date
 from dateutil.relativedelta import relativedelta, FR, MO
