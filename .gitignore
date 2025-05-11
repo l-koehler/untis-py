@@ -5,3 +5,5 @@ main.spec
 upx.exe
 .venv/
 .direnv/
+flake.lock
+result/
