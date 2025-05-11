@@ -29,10 +29,12 @@ class colors:
     blue   = "\033[94m"
     cyan   = "\033[96m"
     skip   = "\033[65m" # "no ideogram attributes", used to fix some mess with string lengths
-    yellow = "\033[93m"
+    orange = "\033[93m" # ANSI yellow, but the UI looks bad with yellow so we call it orange for consistency
     green  = "\033[92m"
     red    = "\033[91m"
+    bold   = "\033[1m"
     reset  = "\033[0m"
+
 starttime = date.today() + relativedelta(weekday=MO(-1))
 starttime += relativedelta(weeks=args.offset)
 endtime = starttime + relativedelta(weekday=FR)
@@ -64,6 +66,16 @@ if args.credentials == None:
 else:
     credentials = args.credentials
 
+def html_prettyprint(text, cmode):
+    if cmode == 'err':
+        text = colors.red + text
+    elif cmode == 'warn':
+        text = colors.yellow + text
+    text = text.replace('<br>', '\n')
+    text = text.replace('<b>', colors.bold)
+    text = text.replace('</b>', colors.reset)
+    print(text)
+
 timetable = None
 if args.force_cache:
     cache = settings.value('cached_timetable') or []
@@ -71,17 +83,18 @@ if args.force_cache:
 else:
     session = api.API(credentials, [])
     if session.error_state != None:
-        print(f"Failed to login: {session.error_state}")
-        exit(1)
+        html_prettyprint(session.error_state[1], session.error_state[0])
+        if session.error_state[0] == 'err':
+            exit(1)
     timetable = session.get_table(starttime, endtime).table
 
 # total mess, but transforms the API response into a nice-looking table
 """
-| Monday                  |
-|-------------------------|
-| GGK (004)               |
-| GGK (002  -> 004)       |
-| GGK (003) | EEEPY (E04) |
+| Monday                          |
+|---------------------------------|
+| GGK (004)         |             |
+| GGK (002  -> 004) |             |
+| GGK (003)         | EEEPY (E04) |
 
 """
 
@@ -103,10 +116,9 @@ for hour in timetable:
             period = sorted(day)[period_index]
             period_str = f" {period[0]} ({period[1]}) ".ljust(longest_entry)
             if not args.no_color:
-                if period[3] == "red":
-                    period_str = colors.red + period_str + colors.reset
-                elif period[3] == "orange":
-                    period_str = colors.yellow + period_str + colors.reset
+                if period[3] in [i for i in colors.__dict__.keys() if not i.startswith('_')]:
+                    exec(f"color_dyn = colors.{period[3]}")
+                    period_str = color_dyn + period_str + colors.reset
                 elif period[3] != "white":
                     period_str = colors.cyan + period_str + colors.reset
                 else:
@@ -121,25 +133,26 @@ weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", 
 index = 0
 for day in [day for day in final_response if day != ""]:
     day_as_ls = day.split('\n')
-    if index == date.today().weekday() and not args.no_color:
+    if index == date.today().weekday() and not args.no_color and not args.offset:
         default_top = (f"═ {colors.green}{weekdays[index]}{colors.reset} ").ljust(longest_entry+len(colors.green+colors.reset), '═')
     else:
         default_top = (f"═ {weekdays[index]} ").ljust(longest_entry, '═')
     index_split_lsn = []
     for line in day_as_ls:
         for char_i in range(len(line)):
-            if line[char_i] == "|":
-                if char_i not in index_split_lsn:
-                    index_split_lsn.append(char_i)
+            if line[char_i] == "|" and char_i not in index_split_lsn:
+                index_split_lsn.append(char_i)
     for i in index_split_lsn:
         default_top = default_top[:i] + '╤' + default_top[i+1:].ljust(longest_entry, '═')
+    # dealing with extra invisible text would be a mess, just replace the weekday with a formatted version
+    if not args.no_color:
+        default_top = default_top.replace(weekdays[index], colors.bold + weekdays[index] + colors.reset)
     print(f"╔{default_top}╗")
-    for line in day_as_ls:
-        if line != "":
-            lsn_split_line = line
-            for i in index_split_lsn:
-                lsn_split_line = lsn_split_line[:i] + '│' + lsn_split_line[i+1:].ljust(longest_entry)
-            print(f"║{lsn_split_line}║")
+    for line in [i for i in day_as_ls if i != ""]:
+        lsn_split_line = line
+        for i in index_split_lsn:
+            lsn_split_line = lsn_split_line[:i] + '│' + lsn_split_line[i+1:].ljust(longest_entry)
+        print(f"║{lsn_split_line}║")
     default_bottom = ''.ljust(longest_entry, '═')
     for i in index_split_lsn:
         default_bottom = default_bottom[:i] + '╧' + default_bottom[i+1:].ljust(longest_entry, '═')

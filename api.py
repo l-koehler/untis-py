@@ -100,20 +100,19 @@ class API:
             self.session = new_session.login()
         except webuntis.errors.RemoteError as e:
             self.session = None
-            self.error_state = f"Error: \"{e}\". Check credentials!"
-            print(self.error_state)
+            self.error_state = ["err", f"<b>Error:</b> {e}<br>Check credentials!"]
             return
         except Exception as e:
             self.session = None
-            self.error_state = f"Error: \"{e}\""
-            print(self.error_state)
+            self.error_state = ["err", f"<b>Error:</b> {e}"]
             return
+        
         self.app_api = App_API(credentials)
         try:
             self.app_api.login()
         except Exception as e:
-            self.error_state = f"App API Error: \"{e}\""
-            print(self.error_state)
+            self.error_state = ["warn", f"<b>Warning:</b> App API Error encountered, App API disabled. Exams will not be displayed!<br><b>API Error:</b> {e}"]
+            self.app_api = App_API_Stub()
             return
 
 
@@ -139,7 +138,7 @@ class API:
 
         exam_table = self.app_api.getExams(starttime, endtime)
         if "error" in exam_table:
-            raise APIReplError(f"App API replied with error: \"{err}\"!")
+            raise APIReplError(f"App API replied with error: \"{exam_table['error']}\"!")
         exam_table = exam_table["result"]["exams"]
         
         ret = []
@@ -314,8 +313,12 @@ class App_API:
             "endDate": friday.isoformat(),
             # the following parameters are commented as "unknown usage" on BetterUntis
             "masterDataTimestamp": 0,
-            "timetableTimestamp": 0,
+            "timetableTimestamp" : 0,
             "timetableTimestamps": []
         }
         response = self.genericAuthenticatedRequest("getTimetable2017", params)
         return response
+
+class App_API_Stub:
+    def getExams(self, a, b):
+        return {"result": {"exams": []}}
