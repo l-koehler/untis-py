@@ -1,29 +1,28 @@
-{ lib
-, buildPythonPackage
-, fetchPypi
-, setuptools
-, wheel
-}:
+{ lib, buildPythonPackage, fetchFromGitHub, setuptools, wheel, python }:
 
 buildPythonPackage rec {
   pname = "python-dateutil";
   version = "2.9.0.post0";
 
-  src = fetchPypi {
-    inherit pname version;
-    hash = "sha256-kZepJC5VxvcqsCYaG1scYAFts1NMhDwdoRHoZIF+Xzc=";
+  src = fetchFromGitHub {
+    owner = "dateutil";
+    repo = "dateutil";
+    rev = "1ae807774053c071acc9e7d3d27778fba0a7773e";
+    hash = "sha256-YaA/MeXwXbc6NNrNf52Ol9Z8eI+z6EXQW/vvrzBlYSo=";
   };
 
-
-  buildInputs = [  ];
-
-  # do not run tests
-  doCheck = false;
-
-  # specific to buildPythonPackage, see its reference
-  pyproject = true;
-  build-system = [
+  nativeBuildInputs = [
     setuptools
     wheel
+    python.pkgs.pip
+    python.pkgs.setuptools_scm
   ];
+
+  doCheck = false;
+
+  meta = with lib; {
+    description = "Useful extensions to the standard Python datetime features";
+    homepage = "https://github.com/dateutil/dateutil";
+    license = licenses.asl20; # apache 2
+  };
 }
