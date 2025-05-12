@@ -1,1 +1,0 @@
-(import ./flake.nix).outputs.devShells.x86_64-linux.default
