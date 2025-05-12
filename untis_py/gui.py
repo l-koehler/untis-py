@@ -321,12 +321,24 @@ class MainWindow(QMainWindow):
 
     def load_settings(self, no_set_credentials):
         if not no_set_credentials:
-            self.server   = self.settings.value('server')
-            self.school   = self.settings.value('school')
-            self.user     = self.settings.value('user')
-            self.password = self.settings.value('password')
+            try:
+                self.server   = self.settings.value('server')
+                self.school   = self.settings.value('school')
+                self.user     = self.settings.value('user')
+                self.password = self.settings.value('password')
+            except SystemError:
+                # accessing settings failed
+                # happens on the first start
+                # set them to empty, it'll sort itself out
+                self.server   = None
+                self.school   = None
+                self.user     = None
+                self.password = None
         if not "--no-cache" in sys.argv:
-            self.ref_cache = self.settings.value('cached_timetable') or []
+            try:
+                self.ref_cache = self.settings.value('cached_timetable') or []
+            except TypeError:
+                self.ref_cache = []
         else:
             self.ref_cache = []
 
