@@ -27,6 +27,7 @@
           webuntis
           python-dateutil
           # indirect deps
+          hatchling
           six
         ];
       in {
@@ -34,19 +35,12 @@
           pname = "untis_py";
           version = "1.1.0";
           src = ./.;
-          format = "setuptools";
+          format = "pyproject";
           propagatedBuildInputs = pyDeps;
 
           installPhase = ''
             runHook preInstall
-            python setup.py install --prefix=$out
-
-            # entrypoints are fucked somehow
-            # fix that
-            mkdir -p $out/bin
-            echo '#!/bin/sh' > $out/bin/untis
-            echo 'python -m untis_py.main "$@"' >> $out/bin/untis
-            chmod +x $out/bin/untis
+            python3 -m pip install . --prefix=$out
 
             mkdir -p $out/share/applications
             cp ${./untis-py.desktop} $out/share/applications/
