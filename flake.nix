@@ -30,8 +30,8 @@
           six
         ];
       in {
-        packages.untis-py = pyPkgs.buildPythonApplication {
-          pname = "untis-py";
+        packages.untis_py = pyPkgs.buildPythonPackage {
+          pname = "untis_py";
           version = "1.1.0";
           src = ./.;
           format = "setuptools";
@@ -66,12 +66,12 @@
           };
         };
 
-        apps.untis-py = flake-utils.lib.mkApp {
-          drv = self.packages.${system}.untis-py;
+        apps.untis_py = flake-utils.lib.mkApp {
+          drv = self.packages.${system}.untis_py;
         };
 
-        defaultPackage = self.packages.${system}.untis-py;
-        defaultApp = self.apps.${system}.untis-py;
+        defaultPackage = self.packages.${system}.untis_py;
+        defaultApp = self.apps.${system}.untis_py;
 
         devShell = pkgs.mkShell {
           packages = [

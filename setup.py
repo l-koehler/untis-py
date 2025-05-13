@@ -1,9 +1,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="untis-py",
+    name="untis_py",
     version="1.1.0",
-    packages=find_packages(),
+    packages=["untis_py"],
     include_package_data=True,
     install_requires=[
         'requests',
@@ -17,6 +17,7 @@ setup(
         ]
     },
     package_data={
-        "untis-py": ["icons/*.png", "icons/*.svg", "icons/*.ico"]
+        "untis_py": ["icons/*.png", "icons/*.svg", "icons/*.ico"]
     },
+    zip_safe=False
 )
