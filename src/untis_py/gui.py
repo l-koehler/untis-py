@@ -1,6 +1,6 @@
-import sys, os, api, re, threading
+import sys, os, threading
+from untis_py import api
 import datetime as dt
-from dateutil.relativedelta import relativedelta, FR, MO
 
 use_qt5 = None
 try:
@@ -620,7 +620,7 @@ class MainWindow(QMainWindow):
         if getattr(sys, 'frozen', False):
             ico_path = os.path.join(sys._MEIPASS, "icon.ico")
         else:
-            ico_path = "./icon.ico"
+            ico_path = "../../icon.ico"
         self.setupUi(self)
         # workaround to set icon on windows
         # how did this mess of an OS ever succeed
