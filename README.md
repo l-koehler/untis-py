@@ -9,9 +9,7 @@ The UI is atrocious: seriously it takes up 3/4 of my screen, sorry ig
 
 ## Installation
 
-This is a python package, you can install it using `pip install -e .`  
-You will need to put the `untis-py.desktop` file and the icons into the right  
-directories yourself, look at lines 50-60 of the `flake.nix` for that.  
+figure it out, i give up.  
 
 ## On NixOS
 

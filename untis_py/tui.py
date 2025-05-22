@@ -19,7 +19,7 @@ def main(args):
 
     qt_ver = None
     settings = None
-    if args.credentials == None or not args.force_cache or args.delete_settings:
+    if args.credentials == None or args.force_cache or args.delete_settings:
         if args.force_qt5:
             from PyQt5.QtCore import QSettings
         elif args.force_qt6:

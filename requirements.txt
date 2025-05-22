@@ -1,4 +1,0 @@
-#PyQt5==5.15
-PyQt6==6.7
-python_dateutil==2.9
-webuntis==0.1
