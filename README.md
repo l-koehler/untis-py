@@ -1,6 +1,7 @@
-# Not made or endorsed by the Untis GMBH!
+**This is a mirror of https://codeberg.org/l-koehler/untis-py**  
+**I likely won't see pull requests / issues here!**  
 
-For the official (mobile) App, visit untis.at!
+For the official (mobile) app, visit untis.at!
 
 ## Limitations
 
